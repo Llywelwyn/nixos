@@ -12,13 +12,14 @@
 
   services.openssh = {
     enable = true;
+    ports = [ 4200 ];
     settings = {
       PasswordAuthentication = false;
       PermitRootLogin = "no";
     };
   };
 
-  networking.firewall.allowedTCPPorts = [ 80 443 ];
+  networking.firewall.allowedTCPPorts = [ 80 443 4200 ];
 
   users.users.lew = {
     isNormalUser = true;
