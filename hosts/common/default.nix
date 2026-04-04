@@ -10,5 +10,6 @@
     git
     sops
     just
+    htop
   ];
 }
