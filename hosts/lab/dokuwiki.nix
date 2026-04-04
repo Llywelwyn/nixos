@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, ... }:
 {
   services.caddy.virtualHosts."wiki.ily.rs" = {
     extraConfig = ''
@@ -21,5 +21,5 @@
     ports = [ "127.0.0.1:8070:80" ];
   };
 
-  systemd.services.podman-dokuwiki.serviceConfig.User = "lew";
+  systemd.services.podman-dokuwiki.serviceConfig.User = lib.mkForce "lew";
 }

@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, ... }:
 {
   services.caddy.virtualHosts."foundry.ily.rs" = {
     extraConfig = ''
@@ -19,5 +19,5 @@
     ports = [ "127.0.0.1:30000:30000" ];
   };
 
-  systemd.services.podman-foundry.serviceConfig.User = "lew";
+  systemd.services.podman-foundry.serviceConfig.User = lib.mkForce "lew";
 }
