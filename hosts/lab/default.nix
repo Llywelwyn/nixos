@@ -5,6 +5,7 @@
     ../common
     ./foundry.nix
     ./dokuwiki.nix
+    ./forgejo.nix
   ];
 
   networking.hostName = "lab";
@@ -35,6 +36,8 @@
     defaultNetwork.settings.dns_enabled = true;
   };
   virtualisation.oci-containers.backend = "podman";
+
+  sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
   services.caddy.enable = true;
 

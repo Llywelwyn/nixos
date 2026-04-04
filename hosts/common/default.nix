@@ -8,5 +8,6 @@
   environment.systemPackages = with pkgs; [
     neovim
     git
+    sops
   ];
 }
