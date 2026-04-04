@@ -9,5 +9,6 @@
     neovim
     git
     sops
+    just
   ];
 }
