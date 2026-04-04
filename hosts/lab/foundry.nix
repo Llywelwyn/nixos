@@ -11,8 +11,7 @@
     image = "node:22.22.2-slim";
     cmd = [ "node" "main.js" "--dataPath=/data" ];
     workdir = "/app";
-    user = "1000:1000";
-    podman.user = "lew";
+    podman.user = "podman";
     volumes = [
       "/srv/foundry/app:/app:ro"
       "/srv/foundry/data:/data"

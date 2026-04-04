@@ -23,6 +23,18 @@
 
   security.sudo.wheelNeedsPassword = false;
 
+  users.users.podman = {
+    isSystemUser = true;
+    group = "podman";
+    home = "/var/lib/podman";
+    createHome = true;
+    uid = 900;
+    linger = true;
+    subUidRanges = [{ startUid = 100000; count = 65536; }];
+    subGidRanges = [{ startGid = 100000; count = 65536; }];
+  };
+  users.groups.podman = {};
+
   virtualisation.containers.enable = true;
   virtualisation.podman = {
     enable = true;
