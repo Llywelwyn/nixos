@@ -1,3 +1,5 @@
+set default := 'list'
+
 [doc("Build and activate the new configuration immediately")]
 deploy:
     sudo nixos-rebuild switch --flake /etc/nixos#lab
