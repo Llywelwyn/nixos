@@ -1,6 +1,6 @@
 { ... }:
 {
-  services.caddy.virtualHosts."wiki.wynne.rs" = {
+  services.caddy.virtualHosts."wiki.ily.rs" = {
     extraConfig = ''
       reverse_proxy localhost:8070
       encode zstd gzip
