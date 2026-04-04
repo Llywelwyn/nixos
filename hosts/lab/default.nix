@@ -3,6 +3,8 @@
   imports = [
     ./hardware-configuration.nix
     ../common
+    ./foundry.nix
+    ./dokuwiki.nix
   ];
 
   networking.hostName = "lab";
@@ -26,6 +28,15 @@
   };
 
   security.sudo.wheelNeedsPassword = false;
+
+  virtualisation.containers.enable = true;
+  virtualisation.podman = {
+    enable = true;
+    defaultNetwork.settings.dns_enabled = true;
+  };
+  virtualisation.oci-containers.backend = "podman";
+
+  services.caddy.enable = true;
 
   system.stateVersion = "23.11";
 }
