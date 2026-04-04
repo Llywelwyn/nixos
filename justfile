@@ -1,4 +1,5 @@
-set default := 'list'
+default:
+    @just --list
 
 [doc("Build and activate the new configuration immediately")]
 deploy:
