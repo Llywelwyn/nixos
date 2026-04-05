@@ -18,7 +18,7 @@ in
     environment = {
       HOST = "127.0.0.1";
       PORT = toString port;
-      ASTRO_DATABASE_FILE = "${dataDir}/data/guestbook.db";
+      ASTRO_DB_REMOTE_URL = "file:${dataDir}/data/guestbook.db";
     };
     serviceConfig = {
       Type = "simple";
