@@ -45,6 +45,12 @@
 
   sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
+  environment.systemPackages = with pkgs; [
+    nodejs
+    pnpm
+    sqlite
+  ];
+
   services.caddy.enable = true;
   services.caddy.email = "lew@ily.rs";
 
