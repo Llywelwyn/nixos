@@ -11,6 +11,12 @@ in
     '';
   };
 
+  services.caddy.virtualHosts."ily.rs" = {
+    extraConfig = ''
+      redir https://wynne.rs{uri} permanent
+    '';
+  };
+
   systemd.services.wynne = {
     description = "wynne.rs";
     after = [ "network.target" ];
