@@ -6,6 +6,7 @@
     ./foundry.nix
     ./dokuwiki.nix
     ./forgejo.nix
+    ./wynne.nix
   ];
 
   networking.hostName = "lab";

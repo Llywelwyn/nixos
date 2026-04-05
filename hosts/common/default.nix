@@ -25,5 +25,7 @@
     sops
     just
     htop
+    nodejs
+    pnpm
   ];
 }
