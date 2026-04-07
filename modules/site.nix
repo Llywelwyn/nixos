@@ -175,13 +175,14 @@ in
               id = "${name}-rebuild";
               execute-command = "/run/current-system/sw/bin/touch";
               pass-arguments-to-command = [
-                { source = "string"; name = "${site.dataDir}/trigger"; }
+                { source = "string"; name = "/run/site-rebuild/${name}"; }
               ];
             }) cfg;
             hooksFile = pkgs.writeText "site-hooks.json" (builtins.toJSON allHooks);
           in "${pkgs.webhook}/bin/webhook -hooks ${hooksFile} -port ${toString webhookPort} -verbose";
           Restart = "always";
           DynamicUser = true;
+          RuntimeDirectory = "site-rebuild";
         };
       };
     }]);
@@ -191,7 +192,7 @@ in
         description = "Watch for ${name} rebuild trigger";
         wantedBy = [ "multi-user.target" ];
         pathConfig = {
-          PathModified = "${site.dataDir}/trigger";
+          PathModified = "/run/site-rebuild/${name}";
           Unit = "${name}-rebuild.service";
         };
       };
