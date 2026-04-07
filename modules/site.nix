@@ -85,6 +85,27 @@ let
         default = [ "forgejo.service" ];
         description = "Systemd units to wait for before building.";
       };
+
+      preview = {
+        enable = lib.mkEnableOption "TinyAuth-protected preview of this site";
+
+        branch = mkOption {
+          type = types.str;
+          default = "preview";
+        };
+
+        domain = mkOption {
+          type = types.str;
+          default = "0${name}.ily.rs";
+          description = "Preview domain. Defaults to 0<name>.ily.rs.";
+        };
+
+        port = mkOption {
+          type = types.nullOr types.port;
+          default = null;
+          description = "Port for preview Node.js server. Required when parent static = false.";
+        };
+      };
     };
   });
 
