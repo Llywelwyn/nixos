@@ -7,6 +7,7 @@
     ./dokuwiki.nix
     ./forgejo.nix
     ./wynne.nix
+    ./fail2ban.nix
   ];
 
   networking.hostName = "lab";
