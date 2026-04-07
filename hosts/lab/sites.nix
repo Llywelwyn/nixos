@@ -53,7 +53,6 @@ in
     redirectDomains = [ "penfield.wynne.rs" ];
     repo = "https://git.ily.rs/lew/penfield";
     static = true;
-    preview.enable = true;
   };
 
   services.site.record-generator = {
