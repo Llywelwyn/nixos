@@ -54,6 +54,7 @@ in
     enable = true;
     domain = "c.ily.rs";
     repo = "https://git.ily.rs/lew/character-records-generator";
+    branch = "master";
     static = true;
     buildOutputDir = "build";
     packageManager = "npm";
