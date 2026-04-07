@@ -40,12 +40,8 @@
     };
   };
 
-  # Enable Caddy access logging (to journal via stderr)
-  services.caddy.globalConfig = ''
-    servers {
-      logs
-    }
-  '';
+  # Each virtualHost already has a `log` block for access logging.
+  # The global `servers { logs }` directive was removed in Caddy 2.11.
 
   environment.etc."fail2ban/filter.d/forgejo.conf".text = ''
     [Definition]
