@@ -5,6 +5,8 @@ let
 
   siteModule = types.submodule ({ name, ... }: {
     options = {
+      enable = lib.mkEnableOption "this site";
+
       domain = mkOption {
         type = types.str;
         description = "Primary domain name.";
@@ -86,7 +88,7 @@ let
     };
   });
 
-  cfg = config.services.site;
+  cfg = lib.filterAttrs (_: site: site.enable) config.services.site;
 
   webhookPort = 4323;
 

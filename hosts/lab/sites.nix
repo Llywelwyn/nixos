@@ -1,5 +1,6 @@
 # services.site.<name> options:
 #
+#   enable              — whether this site is active (default: false)
 #   domain              — primary domain (required)
 #   repo                — git repository URL (required)
 #   static              — serve build output as static files, no Node server (default: false)
@@ -14,6 +15,9 @@
 #   dataDir             — base directory for repo and data (default: /srv/<name>)
 #   readWritePaths      — paths the server can write to at runtime (default: [])
 #   afterServices       — systemd units to wait for before building (default: ["forgejo.service"])
+#
+# a listener is active on http://localhost:4323/hooks/${name}-rebuild for CD
+# Forgejo repo -> settings -> Webhooks -> Add webhook
 
 { ... }:
 let
@@ -36,7 +40,8 @@ in
   };
 
   services.site.penfield = {
-    domain = "penfield2.ily.rs";
+    domain = "penfield.ily.rs";
+    redirectDomains = [ "penfield.wynne.rs" ];
     repo = "https://git.ily.rs/lew/penfield";
     static = true;
   };
