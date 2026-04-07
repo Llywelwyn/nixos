@@ -89,7 +89,6 @@ let
         else "${pmBin} ci";
     in
     { inherit pmBin installCmd; dataDir = site.dataDir; };
-
 in
 {
   options.services.site = mkOption {
