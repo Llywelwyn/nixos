@@ -6,7 +6,8 @@
     ./foundry.nix
     ./dokuwiki.nix
     ./forgejo.nix
-    ./wynne.nix
+    ../../modules/site.nix
+    ./sites.nix
     ./fail2ban.nix
     ./uptime-kuma.nix
   ];
