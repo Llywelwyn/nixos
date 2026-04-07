@@ -16,8 +16,10 @@
 #   readWritePaths      — paths the server can write to at runtime (default: [])
 #   afterServices       — systemd units to wait for before building (default: ["forgejo.service"])
 #
-# a listener is active on http://localhost:4323/hooks/${name}-rebuild for CD
-# Forgejo repo -> settings -> Webhooks -> Add webhook
+# remarks:
+#
+#   - a listener is active on http://localhost:4323/hooks/${name}-rebuild for CD
+#     Forgejo repo -> settings -> Webhooks -> Add webhook
 
 { ... }:
 let
@@ -46,5 +48,14 @@ in
     redirectDomains = [ "penfield.wynne.rs" ];
     repo = "https://git.ily.rs/lew/penfield";
     static = true;
+  };
+
+  services.site.record-generator = {
+    enable = true;
+    domain = "c.ily.rs";
+    repo = "https://git.ily.rs/lew/character-records-generator";
+    static = true;
+    buildOutputDir = "build";
+    packageManager = "npm";
   };
 }
