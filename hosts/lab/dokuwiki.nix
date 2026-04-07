@@ -2,9 +2,16 @@
 {
   services.caddy.virtualHosts."wiki.ily.rs" = {
     extraConfig = ''
-      import tinyauth
-      reverse_proxy localhost:8070
-      encode zstd gzip
+      @health path /health-ping
+      handle @health {
+        reverse_proxy localhost:8070
+      }
+
+      handle {
+        import tinyauth
+        reverse_proxy localhost:8070
+        encode zstd gzip
+      }
     '';
   };
 
