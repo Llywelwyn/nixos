@@ -35,7 +35,6 @@ in
 
   services.site.penfield = {
     domain = "penfield2.ily.rs";
-    redirectDomains = [ "penfield.wynne.rs" ];
     repo = "https://git.ily.rs/lew/penfield";
     port = 4324;
   };
