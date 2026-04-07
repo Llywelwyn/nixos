@@ -30,12 +30,6 @@ let
         description = "Port the Node.js server listens on.";
       };
 
-      webhookPort = mkOption {
-        type = types.port;
-        default = config.port + 1;
-        description = "Port for the rebuild webhook listener.";
-      };
-
       packageManager = mkOption {
         type = types.enum [ "npm" "pnpm" ];
         default = "pnpm";
@@ -165,27 +159,6 @@ let
         };
       };
 
-      systemd.services."${name}-webhook" = {
-        description = "Webhook listener for ${site.domain}";
-        after = [ "network.target" ];
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = let
-            hooks = pkgs.writeText "${name}-hooks.json" (builtins.toJSON [{
-              id = "${name}-rebuild";
-              execute-command = "/run/current-system/sw/bin/touch";
-              pass-arguments-to-command = [
-                { source = "string"; name = "${dataDir}/trigger"; }
-              ];
-            }]);
-          in "${pkgs.webhook}/bin/webhook -hooks ${hooks} -port ${toString site.webhookPort} -verbose";
-          Restart = "always";
-          User = name;
-          Group = name;
-        };
-      };
-
       users.users.${name} = {
         isSystemUser = true;
         group = name;
@@ -202,5 +175,32 @@ in
     description = "Node.js web site services with git clone, build, and webhook support.";
   };
 
-  config = mkIf (cfg != {}) (mkMerge (mapAttrsToList makeSiteConfig cfg));
+  options.services.siteWebhookPort = mkOption {
+    type = types.port;
+    default = 4323;
+    description = "Port for the shared site rebuild webhook listener.";
+  };
+
+  config = mkIf (cfg != {}) (mkMerge ((mapAttrsToList makeSiteConfig cfg) ++ [{
+    systemd.services.site-webhook = {
+      description = "Webhook listener for site rebuilds";
+      after = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = let
+          allHooks = mapAttrsToList (name: site: {
+            id = "${name}-rebuild";
+            execute-command = "/run/current-system/sw/bin/touch";
+            pass-arguments-to-command = [
+              { source = "string"; name = "${site.dataDir}/trigger"; }
+            ];
+          }) cfg;
+          hooksFile = pkgs.writeText "site-hooks.json" (builtins.toJSON allHooks);
+        in "${pkgs.webhook}/bin/webhook -hooks ${hooksFile} -port ${toString config.services.siteWebhookPort} -verbose";
+        Restart = "always";
+        DynamicUser = true;
+      };
+    };
+  }]));
 }
