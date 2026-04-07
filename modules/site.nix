@@ -110,6 +110,7 @@ let
   });
 
   cfg = lib.filterAttrs (_: site: site.enable) config.services.site;
+  previewCfg = lib.filterAttrs (_: site: site.enable && site.preview.enable) config.services.site;
 
   webhookPort = 4323;
 
@@ -134,7 +135,7 @@ in
   };
 
   config = {
-    services.caddy.virtualHosts = mkMerge (mapAttrsToList (name: site:
+    services.caddy.virtualHosts = mkMerge ((mapAttrsToList (name: site:
       {
         ${site.domain}.extraConfig = if site.static then ''
           root * ${site.dataDir}/repo/${site.buildOutputDir}
@@ -151,7 +152,35 @@ in
           redir https://${site.domain}{uri} permanent
         '';
       }) site.redirectDomains)
-    ) cfg);
+    ) cfg) ++ (mapAttrsToList (name: site:
+      let previewDataDir = "/srv/${name}-preview"; in {
+        ${site.preview.domain}.extraConfig = if site.static then ''
+          @health path /health-ping
+          handle @health {
+            root * ${previewDataDir}/repo/${site.buildOutputDir}
+            try_files {path} /index.html
+            file_server
+          }
+          handle {
+            import tinyauth
+            root * ${previewDataDir}/repo/${site.buildOutputDir}
+            encode zstd gzip
+            try_files {path} /index.html
+            file_server
+          }
+        '' else ''
+          @health path /health-ping
+          handle @health {
+            reverse_proxy localhost:${toString site.preview.port}
+          }
+          handle {
+            import tinyauth
+            reverse_proxy localhost:${toString site.preview.port}
+            encode zstd gzip
+          }
+        '';
+      }
+    ) previewCfg));
 
     systemd.services = mkMerge ((mapAttrsToList (name: site:
       let h = siteHelpers name site; in {
