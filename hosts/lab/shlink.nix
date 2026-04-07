@@ -29,7 +29,6 @@
 
   services.caddy.virtualHosts."ily.rs" = {
     extraConfig = ''
-      redir / https://wynne.rs permanent
       reverse_proxy localhost:8080
       encode zstd gzip
     '';
@@ -37,9 +36,16 @@
 
   services.caddy.virtualHosts."links.ily.rs" = {
     extraConfig = ''
-      import tinyauth
-      reverse_proxy localhost:8081
-      encode zstd gzip
+      @health path /health-ping
+      handle @health {
+        respond 200
+      }
+
+      handle {
+        import tinyauth
+        reverse_proxy localhost:8081
+        encode zstd gzip
+      }
     '';
   };
 
