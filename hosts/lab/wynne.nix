@@ -41,6 +41,9 @@ in
   systemd.services.wynne-rebuild = {
     description = "Clone/pull and build wynne.rs";
     after = [ "network-online.target" ];
+    environment = {
+      ASTRO_DB_REMOTE_URL = "file:${dataDir}/data/guestbook.db";
+    };
     wants = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
@@ -57,7 +60,7 @@ in
         fi
         cd ${dataDir}/repo
         ${pkgs.git}/bin/git fetch origin
-        ${pkgs.git}/bin/git reset --hard origin/main
+        ${pkgs.git}/bin/git reset --hard origin/master
         ${pkgs.pnpm}/bin/pnpm install --frozen-lockfile
         ${pkgs.pnpm}/bin/pnpm build
       '';
