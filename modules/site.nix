@@ -135,6 +135,11 @@ in
   };
 
   config = {
+    assertions = mapAttrsToList (name: site: {
+      assertion = site.static || site.preview.port != null;
+      message = "services.site.${name}.preview.port is required when static = false and preview is enabled";
+    }) previewCfg;
+
     services.caddy.virtualHosts = mkMerge ((mapAttrsToList (name: site:
       {
         ${site.domain}.extraConfig = if site.static then ''
@@ -157,9 +162,7 @@ in
         ${site.preview.domain}.extraConfig = if site.static then ''
           @health path /health-ping
           handle @health {
-            root * ${previewDataDir}/repo/${site.buildOutputDir}
-            try_files {path} /index.html
-            file_server
+            respond 200
           }
           handle {
             import tinyauth
@@ -171,7 +174,7 @@ in
         '' else ''
           @health path /health-ping
           handle @health {
-            reverse_proxy localhost:${toString site.preview.port}
+            respond 200
           }
           handle {
             import tinyauth

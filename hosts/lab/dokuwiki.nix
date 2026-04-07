@@ -4,7 +4,7 @@
     extraConfig = ''
       @health path /health-ping
       handle @health {
-        reverse_proxy localhost:8070
+        respond 200
       }
 
       handle {
