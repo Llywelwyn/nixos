@@ -62,12 +62,12 @@ let
       readWritePaths = mkOption {
         type = types.listOf types.str;
         default = [];
-        description = "Extra paths the server can write to at runtime.";
+        description = "Paths the server can write to at runtime.";
       };
 
       afterServices = mkOption {
         type = types.listOf types.str;
-        default = [];
+        default = [ "forgejo.service" ];
         description = "Systemd units to wait for before building.";
       };
     };
