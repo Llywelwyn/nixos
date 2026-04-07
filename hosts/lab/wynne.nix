@@ -21,8 +21,6 @@ in
   systemd.services.wynne = {
     description = "wynne.rs";
     after = [ "wynne-rebuild.service" ];
-    wants = [ "wynne-rebuild.service" ];
-    wantedBy = [ "multi-user.target" ];
     environment = {
       HOST = "127.0.0.1";
       PORT = toString port;
@@ -48,13 +46,15 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = false;
+      ExecStartPre = "+${pkgs.writeShellScript "prepare-wynne" ''
+        mkdir -p ${dataDir}/data
+        chown -R wynne:wynne ${dataDir}
+      ''}";
       ExecStart = pkgs.writeShellScript "rebuild-wynne" ''
         set -euo pipefail
         if [ ! -d ${dataDir}/repo/.git ]; then
-          mkdir -p ${dataDir}
           ${pkgs.git}/bin/git clone ${repo} ${dataDir}/repo
         fi
-        mkdir -p ${dataDir}/data
         cd ${dataDir}/repo
         ${pkgs.git}/bin/git fetch origin
         ${pkgs.git}/bin/git reset --hard origin/main
@@ -65,7 +65,6 @@ in
       ExecStartPost = "+/run/current-system/sw/bin/systemctl restart wynne";
       User = "wynne";
       Group = "wynne";
-      ReadWritePaths = [ dataDir ];
     };
   };
 
