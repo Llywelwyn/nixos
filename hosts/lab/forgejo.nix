@@ -29,7 +29,7 @@ in
         START_SSH_SERVER = true;
         SSH_PORT = 4201;
         SSH_LISTEN_PORT = 4201;
-        DISABLE_HTTP_GIT = true;
+        DISABLE_HTTP_GIT = false;
       };
       service = {
         DISABLE_REGISTRATION = true;
