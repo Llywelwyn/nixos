@@ -15,11 +15,16 @@
 #   dataDir             — base directory for repo and data (default: /srv/<name>)
 #   readWritePaths      — paths the server can write to at runtime (default: [])
 #   afterServices       — systemd units to wait for before building (default: ["forgejo.service"])
+#   preview.enable      — TinyAuth-protected preview of this site (default: false)
+#   preview.branch      — branch for preview (default: "preview")
+#   preview.domain      — preview domain (default: 0<name>.ily.rs)
+#   preview.port        — preview server port (required when static = false)
 #
 # remarks:
 #
 #   - a listener is active on http://localhost:4323/hooks/${name}-rebuild for CD
 #     Forgejo repo -> settings -> Webhooks -> Add webhook
+#   - preview webhook: http://localhost:4323/hooks/${name}-preview-rebuild
 
 { ... }:
 let
@@ -48,6 +53,7 @@ in
     redirectDomains = [ "penfield.wynne.rs" ];
     repo = "https://git.ily.rs/lew/penfield";
     static = true;
+    preview.enable = true;
   };
 
   services.site.record-generator = {
