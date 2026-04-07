@@ -1,8 +1,8 @@
 { pkgs, ... }:
 let
   port = 4322;
-  dataDir = "/srv/wynne";
-  repo = "https://git.ily.rs/lew/wynne";
+  dataDir = "/srv/website";
+  repo = "https://git.ily.rs/lew/website";
 in
 {
   services.caddy.virtualHosts."wynne.rs" = {
