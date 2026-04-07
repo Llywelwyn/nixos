@@ -40,6 +40,7 @@ in
   systemd.services.wynne-rebuild = {
     description = "Clone/pull and build wynne.rs";
     after = [ "network-online.target" ];
+    path = [ pkgs.nodejs pkgs.bash ];
     environment = {
       ASTRO_DB_REMOTE_URL = "file:${dataDir}/data/guestbook.db";
     };
@@ -61,7 +62,7 @@ in
         ${pkgs.git}/bin/git fetch origin
         ${pkgs.git}/bin/git reset --hard origin/master
         ${pkgs.pnpm}/bin/pnpm install --frozen-lockfile
-        ${pkgs.pnpm}/bin/pnpm build
+	${pkgs.pnpm}/bin/pnpm build
       '';
       # + prefix runs this line as root (wynne user can't restart services)
       ExecStartPost = "+/run/current-system/sw/bin/systemctl restart wynne";
