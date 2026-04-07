@@ -11,6 +11,7 @@
     ./fail2ban.nix
     ./uptime-kuma.nix
     ./tinyauth.nix
+    ./shlink.nix
   ];
 
   networking.hostName = "lab";

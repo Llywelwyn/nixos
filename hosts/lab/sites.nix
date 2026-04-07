@@ -34,7 +34,6 @@ in
   services.site.website = {
     enable = true;
     domain = "wynne.rs";
-    redirectDomains = [ "ily.rs" ];
     repo = "https://git.ily.rs/lew/website";
     branch = "master";
     port = 4322;
