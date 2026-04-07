@@ -2,6 +2,7 @@
 {
   services.caddy.virtualHosts."wiki.ily.rs" = {
     extraConfig = ''
+      import tinyauth
       reverse_proxy localhost:8070
       encode zstd gzip
     '';
