@@ -16,7 +16,7 @@
 #   readWritePaths      — paths the server can write to at runtime (default: [])
 #   afterServices       — systemd units to wait for before building (default: ["forgejo.service"])
 #   preview.enable      — TinyAuth-protected preview of this site (default: false)
-#   preview.branch      — branch for preview (default: "preview")
+#   preview.branch      — branch for preview (default: "develop")
 #   preview.domain      — preview domain (default: 0<name>.ily.rs)
 #   preview.port        — preview server port (required when static = false)
 #

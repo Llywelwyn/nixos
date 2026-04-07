@@ -91,7 +91,7 @@ let
 
         branch = mkOption {
           type = types.str;
-          default = "preview";
+          default = "develop";
         };
 
         domain = mkOption {
