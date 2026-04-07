@@ -2,7 +2,9 @@
 #
 #   domain              — primary domain (required)
 #   repo                — git repository URL (required)
-#   port                — Node.js server port (required)
+#   static              — serve build output as static files, no Node server (default: false)
+#   port                — Node.js server port (required when static = false)
+#   buildOutputDir      — build output directory relative to repo root (default: "dist")
 #   redirectDomains     — domains that 301 to the primary domain (default: [])
 #   branch              — git branch to track (default: "main")
 #   packageManager      — "npm" or "pnpm" (default: "pnpm")
@@ -36,6 +38,6 @@ in
   services.site.penfield = {
     domain = "penfield2.ily.rs";
     repo = "https://git.ily.rs/lew/penfield";
-    port = 4324;
+    static = true;
   };
 }

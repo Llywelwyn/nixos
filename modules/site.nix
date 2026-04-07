@@ -26,9 +26,22 @@ let
         default = "main";
       };
 
+      static = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Serve build output as static files instead of running a Node.js server.";
+      };
+
       port = mkOption {
-        type = types.port;
-        description = "Port the Node.js server listens on.";
+        type = types.nullOr types.port;
+        default = null;
+        description = "Port the Node.js server listens on. Required when static = false.";
+      };
+
+      buildOutputDir = mkOption {
+        type = types.str;
+        default = "dist";
+        description = "Build output directory relative to repo root (used for static sites).";
       };
 
       packageManager = mkOption {
@@ -100,7 +113,12 @@ in
   config = {
     services.caddy.virtualHosts = mkMerge (mapAttrsToList (name: site:
       {
-        ${site.domain}.extraConfig = ''
+        ${site.domain}.extraConfig = if site.static then ''
+          root * ${site.dataDir}/repo/${site.buildOutputDir}
+          encode zstd gzip
+          try_files {path} /index.html
+          file_server
+        '' else ''
           reverse_proxy localhost:${toString site.port}
           encode zstd gzip
         '';
@@ -114,23 +132,6 @@ in
 
     systemd.services = mkMerge ((mapAttrsToList (name: site:
       let h = siteHelpers name site; in {
-        ${name} = {
-          description = site.domain;
-          environment = {
-            HOST = "127.0.0.1";
-            PORT = toString site.port;
-          } // site.environment;
-          serviceConfig = {
-            Type = "simple";
-            WorkingDirectory = "${h.dataDir}/repo";
-            ExecStart = "${pkgs.nodejs}/bin/node ${site.entryPoint}";
-            Restart = "on-failure";
-            User = name;
-            Group = name;
-            ReadWritePaths = site.readWritePaths;
-          };
-        };
-
         "${name}-rebuild" = {
           description = "Clone/pull and build ${site.domain}";
           after = [ "network-online.target" ] ++ site.afterServices;
@@ -157,9 +158,27 @@ in
               ${h.installCmd}
               ${h.pmBin} run build
             '';
-            ExecStartPost = "+/run/current-system/sw/bin/systemctl restart ${name}";
+            ExecStartPost = lib.mkIf (!site.static)
+              "+/run/current-system/sw/bin/systemctl restart ${name}";
             User = name;
             Group = name;
+          };
+        };
+      } // lib.optionalAttrs (!site.static) {
+        ${name} = {
+          description = site.domain;
+          environment = {
+            HOST = "127.0.0.1";
+            PORT = toString site.port;
+          } // site.environment;
+          serviceConfig = {
+            Type = "simple";
+            WorkingDirectory = "${h.dataDir}/repo";
+            ExecStart = "${pkgs.nodejs}/bin/node ${site.entryPoint}";
+            Restart = "on-failure";
+            User = name;
+            Group = name;
+            ReadWritePaths = site.readWritePaths;
           };
         };
       }
