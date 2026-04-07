@@ -13,6 +13,7 @@
 
   services.postgresql = {
     enable = true;
+    enableTCPIP = true;
     ensureDatabases = [ "shlink" ];
     ensureUsers = [{
       name = "shlink";
