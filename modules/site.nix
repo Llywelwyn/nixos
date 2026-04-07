@@ -234,7 +234,63 @@ in
           };
         };
       }
-    ) cfg) ++ [{
+    ) cfg) ++ (mapAttrsToList (name: site:
+      let
+        h = siteHelpers name site;
+        previewDataDir = "/srv/${name}-preview";
+        previewUser = "${name}-preview";
+      in {
+        "${name}-preview-rebuild" = {
+          description = "Clone/pull and build preview of ${site.domain}";
+          after = [ "network-online.target" ] ++ site.afterServices;
+          path = [ pkgs.nodejs pkgs.bash ]
+            ++ optional (site.packageManager == "pnpm") pkgs.pnpm;
+          environment = site.buildEnvironment;
+          wants = [ "network-online.target" ];
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = false;
+            ExecStartPre = "+${pkgs.writeShellScript "prepare-${name}-preview" ''
+              mkdir -p ${previewDataDir}
+              chown -R ${previewUser}:${previewUser} ${previewDataDir}
+            ''}";
+            ExecStart = pkgs.writeShellScript "rebuild-${name}-preview" ''
+              set -euo pipefail
+              if [ ! -d ${previewDataDir}/repo/.git ]; then
+                ${pkgs.git}/bin/git clone ${site.repo} ${previewDataDir}/repo
+              fi
+              cd ${previewDataDir}/repo
+              ${pkgs.git}/bin/git fetch origin
+              ${pkgs.git}/bin/git reset --hard origin/${site.preview.branch}
+              ${h.installCmd}
+              ${h.pmBin} run build
+            '';
+            ExecStartPost = lib.mkIf (!site.static)
+              "+/run/current-system/sw/bin/systemctl restart ${previewUser}";
+            User = previewUser;
+            Group = previewUser;
+          };
+        };
+      } // lib.optionalAttrs (!site.static) {
+        ${previewUser} = {
+          description = "Preview of ${site.domain}";
+          environment = {
+            HOST = "127.0.0.1";
+            PORT = toString site.preview.port;
+          } // site.environment;
+          serviceConfig = {
+            Type = "simple";
+            WorkingDirectory = "${previewDataDir}/repo";
+            ExecStart = "${pkgs.nodejs}/bin/node ${site.entryPoint}";
+            Restart = "on-failure";
+            User = previewUser;
+            Group = previewUser;
+            ReadWritePaths = site.readWritePaths;
+          };
+        };
+      }
+    ) previewCfg) ++ [{
       site-webhook = mkIf (cfg != {}) {
         description = "Webhook listener for site rebuilds";
         after = [ "network.target" ];
@@ -242,13 +298,19 @@ in
         serviceConfig = {
           Type = "simple";
           ExecStart = let
-            allHooks = mapAttrsToList (name: site: {
+            allHooks = (mapAttrsToList (name: site: {
               id = "${name}-rebuild";
               execute-command = "/run/current-system/sw/bin/touch";
               pass-arguments-to-command = [
                 { source = "string"; name = "/run/site-rebuild/${name}"; }
               ];
-            }) cfg;
+            }) cfg) ++ (mapAttrsToList (name: site: {
+              id = "${name}-preview-rebuild";
+              execute-command = "/run/current-system/sw/bin/touch";
+              pass-arguments-to-command = [
+                { source = "string"; name = "/run/site-rebuild/${name}-preview"; }
+              ];
+            }) previewCfg);
             hooksFile = pkgs.writeText "site-hooks.json" (builtins.toJSON allHooks);
           in "${pkgs.webhook}/bin/webhook -hooks ${hooksFile} -port ${toString webhookPort} -verbose";
           Restart = "always";
