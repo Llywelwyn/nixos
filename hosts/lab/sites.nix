@@ -25,6 +25,7 @@ let
 in
 {
   services.site.website = {
+    enable = true;
     domain = "wynne.rs";
     redirectDomains = [ "ily.rs" ];
     repo = "https://git.ily.rs/lew/website";
@@ -40,6 +41,7 @@ in
   };
 
   services.site.penfield = {
+    enable = true;
     domain = "penfield.ily.rs";
     redirectDomains = [ "penfield.wynne.rs" ];
     repo = "https://git.ily.rs/lew/penfield";
