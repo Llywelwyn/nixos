@@ -1,8 +1,9 @@
 { config, lib, pkgs, ... }:
 let
-  inherit (lib) mkOption types mkIf mkMerge mapAttrsToList optional;
+  inherit (lib) mkOption types mkIf mkMerge mapAttrsToList mapAttrs' nameValuePair
+    concatLists optional;
 
-  siteModule = types.submodule ({ name, config, ... }: {
+  siteModule = types.submodule ({ name, ... }: {
     options = {
       domain = mkOption {
         type = types.str;
@@ -74,9 +75,10 @@ let
 
   cfg = config.services.site;
 
-  makeSiteConfig = name: site:
+  webhookPort = 4323;
+
+  siteHelpers = name: site:
     let
-      dataDir = site.dataDir;
       pmBin =
         if site.packageManager == "pnpm"
         then "${pkgs.pnpm}/bin/pnpm"
@@ -86,86 +88,7 @@ let
         then "${pmBin} install --frozen-lockfile"
         else "${pmBin} ci";
     in
-    {
-      services.caddy.virtualHosts = {
-        ${site.domain} = {
-          extraConfig = ''
-            reverse_proxy localhost:${toString site.port}
-            encode zstd gzip
-          '';
-        };
-      } // builtins.listToAttrs (map (d: {
-        name = d;
-        value.extraConfig = ''
-          redir https://${site.domain}{uri} permanent
-        '';
-      }) site.redirectDomains);
-
-      systemd.services.${name} = {
-        description = site.domain;
-        environment = {
-          HOST = "127.0.0.1";
-          PORT = toString site.port;
-        } // site.environment;
-        serviceConfig = {
-          Type = "simple";
-          WorkingDirectory = "${dataDir}/repo";
-          ExecStart = "${pkgs.nodejs}/bin/node ${site.entryPoint}";
-          Restart = "on-failure";
-          User = name;
-          Group = name;
-          ReadWritePaths = site.readWritePaths;
-        };
-      };
-
-      systemd.services."${name}-rebuild" = {
-        description = "Clone/pull and build ${site.domain}";
-        after = [ "network-online.target" ] ++ site.afterServices;
-        path = [ pkgs.nodejs pkgs.bash ]
-          ++ optional (site.packageManager == "pnpm") pkgs.pnpm;
-        environment = site.buildEnvironment;
-        wants = [ "network-online.target" ];
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = false;
-          ExecStartPre = "+${pkgs.writeShellScript "prepare-${name}" ''
-            mkdir -p ${dataDir}
-            chown -R ${name}:${name} ${dataDir}
-          ''}";
-          ExecStart = pkgs.writeShellScript "rebuild-${name}" ''
-            set -euo pipefail
-            if [ ! -d ${dataDir}/repo/.git ]; then
-              ${pkgs.git}/bin/git clone ${site.repo} ${dataDir}/repo
-            fi
-            cd ${dataDir}/repo
-            ${pkgs.git}/bin/git fetch origin
-            ${pkgs.git}/bin/git reset --hard origin/${site.branch}
-            ${installCmd}
-            ${pmBin} run build
-          '';
-          ExecStartPost = "+/run/current-system/sw/bin/systemctl restart ${name}";
-          User = name;
-          Group = name;
-        };
-      };
-
-      systemd.paths."${name}-rebuild-trigger" = {
-        description = "Watch for ${name} rebuild trigger";
-        wantedBy = [ "multi-user.target" ];
-        pathConfig = {
-          PathModified = "${dataDir}/trigger";
-          Unit = "${name}-rebuild.service";
-        };
-      };
-
-      users.users.${name} = {
-        isSystemUser = true;
-        group = name;
-        home = dataDir;
-      };
-      users.groups.${name} = {};
-    };
+    { inherit pmBin installCmd; dataDir = site.dataDir; };
 
 in
 {
@@ -175,27 +98,116 @@ in
     description = "Node.js web site services with git clone, build, and webhook support.";
   };
 
-  config = mkMerge ((mapAttrsToList makeSiteConfig cfg) ++ [{
-    systemd.services.site-webhook = mkIf (cfg != {}) {
-      description = "Webhook listener for site rebuilds";
-      after = [ "network.target" ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = let
-          webhookPort = 4323;
-          allHooks = mapAttrsToList (name: site: {
-            id = "${name}-rebuild";
-            execute-command = "/run/current-system/sw/bin/touch";
-            pass-arguments-to-command = [
-              { source = "string"; name = "${site.dataDir}/trigger"; }
-            ];
-          }) cfg;
-          hooksFile = pkgs.writeText "site-hooks.json" (builtins.toJSON allHooks);
-        in "${pkgs.webhook}/bin/webhook -hooks ${hooksFile} -port ${toString webhookPort} -verbose";
-        Restart = "always";
-        DynamicUser = true;
+  config = {
+    services.caddy.virtualHosts = mkMerge (mapAttrsToList (name: site:
+      {
+        ${site.domain}.extraConfig = ''
+          reverse_proxy localhost:${toString site.port}
+          encode zstd gzip
+        '';
+      } // builtins.listToAttrs (map (d: {
+        name = d;
+        value.extraConfig = ''
+          redir https://${site.domain}{uri} permanent
+        '';
+      }) site.redirectDomains)
+    ) cfg);
+
+    systemd.services = mkMerge ((mapAttrsToList (name: site:
+      let h = siteHelpers name site; in {
+        ${name} = {
+          description = site.domain;
+          environment = {
+            HOST = "127.0.0.1";
+            PORT = toString site.port;
+          } // site.environment;
+          serviceConfig = {
+            Type = "simple";
+            WorkingDirectory = "${h.dataDir}/repo";
+            ExecStart = "${pkgs.nodejs}/bin/node ${site.entryPoint}";
+            Restart = "on-failure";
+            User = name;
+            Group = name;
+            ReadWritePaths = site.readWritePaths;
+          };
+        };
+
+        "${name}-rebuild" = {
+          description = "Clone/pull and build ${site.domain}";
+          after = [ "network-online.target" ] ++ site.afterServices;
+          path = [ pkgs.nodejs pkgs.bash ]
+            ++ optional (site.packageManager == "pnpm") pkgs.pnpm;
+          environment = site.buildEnvironment;
+          wants = [ "network-online.target" ];
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = false;
+            ExecStartPre = "+${pkgs.writeShellScript "prepare-${name}" ''
+              mkdir -p ${h.dataDir}
+              chown -R ${name}:${name} ${h.dataDir}
+            ''}";
+            ExecStart = pkgs.writeShellScript "rebuild-${name}" ''
+              set -euo pipefail
+              if [ ! -d ${h.dataDir}/repo/.git ]; then
+                ${pkgs.git}/bin/git clone ${site.repo} ${h.dataDir}/repo
+              fi
+              cd ${h.dataDir}/repo
+              ${pkgs.git}/bin/git fetch origin
+              ${pkgs.git}/bin/git reset --hard origin/${site.branch}
+              ${h.installCmd}
+              ${h.pmBin} run build
+            '';
+            ExecStartPost = "+/run/current-system/sw/bin/systemctl restart ${name}";
+            User = name;
+            Group = name;
+          };
+        };
+      }
+    ) cfg) ++ [{
+      site-webhook = mkIf (cfg != {}) {
+        description = "Webhook listener for site rebuilds";
+        after = [ "network.target" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "simple";
+          ExecStart = let
+            allHooks = mapAttrsToList (name: site: {
+              id = "${name}-rebuild";
+              execute-command = "/run/current-system/sw/bin/touch";
+              pass-arguments-to-command = [
+                { source = "string"; name = "${site.dataDir}/trigger"; }
+              ];
+            }) cfg;
+            hooksFile = pkgs.writeText "site-hooks.json" (builtins.toJSON allHooks);
+          in "${pkgs.webhook}/bin/webhook -hooks ${hooksFile} -port ${toString webhookPort} -verbose";
+          Restart = "always";
+          DynamicUser = true;
+        };
       };
-    };
-  }]);
+    }]);
+
+    systemd.paths = mkMerge (mapAttrsToList (name: site: {
+      "${name}-rebuild-trigger" = {
+        description = "Watch for ${name} rebuild trigger";
+        wantedBy = [ "multi-user.target" ];
+        pathConfig = {
+          PathModified = "${site.dataDir}/trigger";
+          Unit = "${name}-rebuild.service";
+        };
+      };
+    }) cfg);
+
+    users.users = mkMerge (mapAttrsToList (name: site: {
+      ${name} = {
+        isSystemUser = true;
+        group = name;
+        home = site.dataDir;
+      };
+    }) cfg);
+
+    users.groups = mkMerge (mapAttrsToList (name: _: {
+      ${name} = {};
+    }) cfg);
+  };
 }
