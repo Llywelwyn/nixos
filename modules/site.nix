@@ -320,7 +320,7 @@ in
       };
     }]);
 
-    systemd.paths = mkMerge (mapAttrsToList (name: site: {
+    systemd.paths = mkMerge ((mapAttrsToList (name: site: {
       "${name}-rebuild-trigger" = {
         description = "Watch for ${name} rebuild trigger";
         wantedBy = [ "multi-user.target" ];
@@ -329,18 +329,35 @@ in
           Unit = "${name}-rebuild.service";
         };
       };
-    }) cfg);
+    }) cfg) ++ (mapAttrsToList (name: site: {
+      "${name}-preview-rebuild-trigger" = {
+        description = "Watch for ${name}-preview rebuild trigger";
+        wantedBy = [ "multi-user.target" ];
+        pathConfig = {
+          PathModified = "/run/site-rebuild/${name}-preview";
+          Unit = "${name}-preview-rebuild.service";
+        };
+      };
+    }) previewCfg));
 
-    users.users = mkMerge (mapAttrsToList (name: site: {
+    users.users = mkMerge ((mapAttrsToList (name: site: {
       ${name} = {
         isSystemUser = true;
         group = name;
         home = site.dataDir;
       };
-    }) cfg);
+    }) cfg) ++ (mapAttrsToList (name: site: {
+      "${name}-preview" = {
+        isSystemUser = true;
+        group = "${name}-preview";
+        home = "/srv/${name}-preview";
+      };
+    }) previewCfg));
 
-    users.groups = mkMerge (mapAttrsToList (name: _: {
+    users.groups = mkMerge ((mapAttrsToList (name: _: {
       ${name} = {};
-    }) cfg);
+    }) cfg) ++ (mapAttrsToList (name: _: {
+      "${name}-preview" = {};
+    }) previewCfg));
   };
 }
