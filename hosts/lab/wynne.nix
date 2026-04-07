@@ -20,7 +20,6 @@ in
 
   systemd.services.wynne = {
     description = "wynne.rs";
-    after = [ "wynne-rebuild.service" ];
     environment = {
       HOST = "127.0.0.1";
       PORT = toString port;
