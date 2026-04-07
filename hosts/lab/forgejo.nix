@@ -35,6 +35,9 @@ in
         DISABLE_REGISTRATION = true;
         REQUIRE_SIGNIN_VIEW = false;
       };
+      webhook = {
+        ALLOWED_HOST_LIST = "loopback";
+      };
     };
   };
 
