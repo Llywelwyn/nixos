@@ -39,7 +39,7 @@ in
   # Always rebuilds because wynne bakes DB content (guestbook) into pages at build time
   systemd.services.wynne-rebuild = {
     description = "Clone/pull and build wynne.rs";
-    after = [ "network-online.target" ];
+    after = [ "network-online.target" "forgejo.service" ];
     path = [ pkgs.nodejs pkgs.bash ];
     environment = {
       ASTRO_DB_REMOTE_URL = "file:${dataDir}/data/guestbook.db";
