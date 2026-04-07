@@ -23,6 +23,7 @@
       local all       all     trust
       host  sameuser  all     127.0.0.1/32 trust
       host  sameuser  all     ::1/128      trust
+      host  sameuser  all     10.0.0.0/8   trust
     '';
   };
 
