@@ -14,7 +14,7 @@
   };
 
   virtualisation.oci-containers.containers.uptime-kuma = {
-    image = "louislam/uptime-kuma:1";
+    image = "louislam/uptime-kuma:2";
     podman.user = "podman";
     volumes = [
       "/srv/uptime-kuma/data:/app/data"
