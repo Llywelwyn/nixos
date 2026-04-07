@@ -8,6 +8,7 @@
     ./forgejo.nix
     ./wynne.nix
     ./fail2ban.nix
+    ./uptime-kuma.nix
   ];
 
   networking.hostName = "lab";
