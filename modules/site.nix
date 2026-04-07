@@ -175,20 +175,15 @@ in
     description = "Node.js web site services with git clone, build, and webhook support.";
   };
 
-  options.services.siteWebhookPort = mkOption {
-    type = types.port;
-    default = 4323;
-    description = "Port for the shared site rebuild webhook listener.";
-  };
-
-  config = mkIf (cfg != {}) (mkMerge ((mapAttrsToList makeSiteConfig cfg) ++ [{
-    systemd.services.site-webhook = {
+  config = mkMerge ((mapAttrsToList makeSiteConfig cfg) ++ [{
+    systemd.services.site-webhook = mkIf (cfg != {}) {
       description = "Webhook listener for site rebuilds";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "simple";
         ExecStart = let
+          webhookPort = 4323;
           allHooks = mapAttrsToList (name: site: {
             id = "${name}-rebuild";
             execute-command = "/run/current-system/sw/bin/touch";
@@ -197,10 +192,10 @@ in
             ];
           }) cfg;
           hooksFile = pkgs.writeText "site-hooks.json" (builtins.toJSON allHooks);
-        in "${pkgs.webhook}/bin/webhook -hooks ${hooksFile} -port ${toString config.services.siteWebhookPort} -verbose";
+        in "${pkgs.webhook}/bin/webhook -hooks ${hooksFile} -port ${toString webhookPort} -verbose";
         Restart = "always";
         DynamicUser = true;
       };
     };
-  }]));
+  }]);
 }
