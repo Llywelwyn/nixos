@@ -1,0 +1,90 @@
+/* Page container */
+.page-container {
+  max-width: 70ch;
+  margin: 0 auto;
+  padding: 1rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Form */
+.guestbook-prompt {}
+.guestbook-form {}
+.guestbook-label {}
+.guestbook-input {}
+.guestbook-textarea {
+  box-sizing: border-box;
+}
+.guestbook-button {
+  display: block;
+  margin-top: 1em;
+}
+
+/* Drawings */
+.guestbook-canvas {
+  border: 1px solid #000;
+  cursor: crosshair;
+  display: block;
+}
+.guestbook-canvas-tools {
+  display: block;
+}
+.guestbook-canvas-tools a {
+  cursor: pointer;
+}
+.guestbook-drawing-inline a {
+  cursor: pointer;
+}
+.guestbook-drawing-content {
+  display: block;
+  margin-bottom: 1em;
+}
+.guestbook-swatch {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  border: 1px solid #000;
+  cursor: pointer;
+  vertical-align: middle;
+  box-sizing: border-box;
+  margin: 0 1px;
+}
+.guestbook-swatch.active {
+  border: 1px solid #000;
+  outline: 1px solid #000;
+}
+.guestbook-size-slider {
+  width: 4em;
+  vertical-align: middle;
+}
+.entry-drawing {
+  max-width: 100%;
+}
+
+/* Voice notes */
+.guestbook-voice-record.recording {
+  color: red;
+}
+.guestbook-voice-timer {
+  font-variant-numeric: tabular-nums;
+}
+.guestbook-voice-playback:empty {
+  display: none;
+}
+.guestbook-voice-playback {
+  display: block;
+  white-space: normal;
+}
+audio {
+  display: block;
+  margin-top: 0.6em;
+  height: 2em;
+}
+
+/* Entries */
+.entry-header {}
+.entry-date {}
+.entry-name {}
+.entry-website {}
+.entry-body {}
+.entry-separator {}

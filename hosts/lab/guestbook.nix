@@ -1,11 +1,5 @@
-{ guestbook, config, ... }:
+{ guestbook, ... }:
 {
-  sops.secrets.guestbook-telegram-token = {
-    sopsFile = ../../secrets/guestbook.yaml;
-    key = "telegram_bot_token";
-    owner = "guestbook";
-  };
-
   services.guestbook = {
     enable = true;
     package = guestbook.packages.aarch64-linux.default;
@@ -33,8 +27,7 @@
         maxDuration = 20;
       };
       telegram = {
-        enable = true;
-        botTokenFile = config.sops.secrets.guestbook-telegram-token.path;
+        enable = false;
         chatId = 8669496383;
       };
       security = {
@@ -51,6 +44,8 @@
     };
 
     styles = {
+      templateFile = "./templates/default.html";
+      successTemplateFile = "./templates/success.html";
       separator = "-----------";
       labels = {
         submit = "Submit";
