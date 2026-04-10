@@ -15,15 +15,15 @@
     };
 
     features = {
-      submissions.enable = false;
-      websites.enable = false;
+      submissions.enable = true;
+      websites.enable = true;
       drawing = {
-        enable = false;
-        canvasWidth = 400;
-        canvasHeight = 200;
+        enable = true;
+        canvasWidth = 300;
+        canvasHeight = 140;
       };
       voiceNote = {
-        enable = false;
+        enable = true;
         maxDuration = 20;
       };
       telegram = {
@@ -54,8 +54,8 @@
         message = "Your message*:";
       };
       message = {
-        width = 400;
-        height = 150;
+        width = 300;
+        height = 100;
       };
     };
   };
