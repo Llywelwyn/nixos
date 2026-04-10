@@ -12,6 +12,12 @@
     caddy = {
       enable = true;
       domain = "g.ily.rs";
+      forwardAuth = {
+      	enable = true;
+	address = "localhost:3002";
+	uri = "/api/auth/caddy";
+	copyHeaders = [ "Remote-User" "Remote-Name" "Remote-Email" "Remote-Groups" ];
+      };
     };
 
     features = {
