@@ -52,7 +52,6 @@
     styles = {
       templateFile = ./templates/default.html;
       successTemplateFile = ./templates/success.html;
-      separator = "-----------";
       labels = {
         submit = "Submit";
         name = "Your name*:";
