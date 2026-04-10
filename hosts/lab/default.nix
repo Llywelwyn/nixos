@@ -12,6 +12,7 @@
     ./uptime-kuma.nix
     ./tinyauth.nix
     ./shlink.nix
+    ./guestbook.nix
   ];
 
   networking.hostName = "lab";
