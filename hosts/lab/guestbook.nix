@@ -1,5 +1,10 @@
-{ guestbook, ... }:
+{ config, guestbook, ... }:
 {
+  sops.secrets.telegram_bot_token = {
+    sopsFile = ../../secrets/guestbook.yaml;
+    owner = "guestbook";
+  };
+
   services.guestbook = {
     enable = true;
     package = guestbook.packages.aarch64-linux.default;
@@ -33,8 +38,9 @@
         maxDuration = 20;
       };
       telegram = {
-        enable = false;
+        enable = true;
         chatId = 8669496383;
+        botTokenFile = config.sops.secrets.telegram_bot_token.path;
       };
       security = {
         htmlInjection.enable = true;
