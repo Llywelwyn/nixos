@@ -3,20 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{title}}</title>
+  <title>{{title}} — ily.rs</title>
   <link rel="stylesheet" href="/style.css">
   {{style}}
 </head>
 <body>
-<div class="page-container">
-<nav style="white-space:normal;">
-  <a href="/">ily [dot] rs</a> |
-  <a href="/links/">links</a> |
-  <a href="/now/">now</a> |
-  sign the <a href="/g/">guestbook</a>
-</nav>
-{{form}}
-{{entries}}
-</div>
+  <nav>
+    <a href="/">ily [dot] rs</a> |
+    <a href="/links/">links</a> |
+    <a href="/now/">now</a> |
+    sign the <a href="/guestbook/">guestbook</a>
+  </nav>
+  <details class="guestbook-details" style="margin-top: 0.5em">
+  <summary class="guestbook-summary">Click me to leave an entry</summary>
+  {{form}}
+  </details>
+  <h1>messages</h1>
+  {{entries}}
 </body>
 </html>
