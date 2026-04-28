@@ -11,6 +11,17 @@
     owner = "podman";
   };
 
+  sops.templates.shlink-servers-json = {
+    content = builtins.toJSON [{
+      name = "ily.rs";
+      url = "https://ily.rs";
+      apiKey = config.sops.placeholder.shlink-api-key;
+      forwardCredentials = false;
+    }];
+    owner = "podman";
+    mode = "0444";
+  };
+
   services.postgresql = {
     enable = true;
     enableTCPIP = true;
@@ -77,6 +88,9 @@
     image = "shlinkio/shlink-web-client:4.7.0";
     podman.user = "podman";
     ports = [ "127.0.0.1:8081:8080" ];
+    volumes = [
+      "${config.sops.templates.shlink-servers-json.path}:/usr/share/nginx/html/servers.json:ro"
+    ];
   };
 
   # Workaround for NixOS/nixpkgs#410857 until backport of #475089 lands
