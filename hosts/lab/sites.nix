@@ -47,6 +47,11 @@
       root * /srv/website/repo/public
       encode zstd gzip
 
+      @now_legacy path /now.txt /txt/now.txt
+      handle @now_legacy {
+        redir /now permanent
+      }
+
       @guestbook path /guestbook /guestbook/*
       handle @guestbook {
         reverse_proxy localhost:8123

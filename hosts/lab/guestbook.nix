@@ -59,9 +59,9 @@
       successTemplateFile = ./templates/success.html;
       labels = {
         submit = "Submit";
-        name = "Your name*:";
-        website = "Your website:";
-        message = "Your message*:";
+        name = "Your name*";
+        website = "Link a website (optional)";
+        message = "Leave a message (optional)";
       };
       message = {
         width = 300;
