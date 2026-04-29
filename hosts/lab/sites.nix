@@ -30,7 +30,10 @@
 #     Forgejo repo -> settings -> Webhooks -> Add webhook
 #   - preview webhook: http://localhost:4323/hooks/${name}-preview-rebuild
 
-{ pkgs, ... }:
+{ pkgs, nixpkgs-unstable, ... }:
+let
+  unstable = import nixpkgs-unstable { inherit (pkgs) system; };
+in
 {
   services.site.website = {
     enable = true;
@@ -42,7 +45,9 @@
     buildOutputDir = "public";
     installCommand = "";
     buildCommand = "zola build";
-    extraBuildPackages = [ pkgs.zola ];
+    # 25.11 ships zola 0.21.0; the new [markdown.highlighting] section
+    # (light_theme/dark_theme/extra_themes) needs 0.22+. Pull from unstable.
+    extraBuildPackages = [ unstable.zola ];
     caddyConfig = ''
       root * /srv/website/repo/public
       encode zstd gzip
