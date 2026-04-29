@@ -23,7 +23,7 @@
       website = "https://ily.rs";
       forgejo = "https://git.ily.rs";
       foundry = "https://foundry.ily.rs";
-      wiki = "https://wiki.ily.rs";
+      wiki = "https://wiki.ily.rs/health-ping";
       penfield = "https://penfield.ily.rs";
     };
   };

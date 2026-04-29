@@ -41,8 +41,8 @@ render_row() {
 
   if [ ! -s "$log_file" ]; then
     local pad
-    pad=$(printf '%*s' "$cells" '' | tr ' ' '?')
-    printf '%s 0.0 unknown\n' "$pad"
+    pad=$(printf '%*s' "$cells" '' | tr ' ' '.')
+    printf '%s 0.000 unknown\n' "$pad"
     return
   fi
 
@@ -68,33 +68,47 @@ render_row() {
       for (i = 0; i < cells; i++) {
         u = (i in up) ? up[i] : 0
         d = (i in down) ? down[i] : 0
-        if (u + d == 0)      bar = bar "?"
-        else if (d == 0)     bar = bar "#"
+        if (u + d == 0)      bar = bar "."
+        else if (d == 0)     bar = bar "="
         else if (u == 0)     bar = bar "_"
-        else                 bar = bar "."
+        else                 bar = bar "-"
         total_up += u; total_all += u + d
       }
       pct = (total_all == 0) ? 0 : (100 * total_up / total_all)
       state = (last_ok == 1) ? "up" : (last_ok == 0) ? "down" : "unknown"
-      printf "%s %.1f %s\n", bar, pct, state
+      printf "%s %.3f %s\n", bar, pct, state
     }' "$log_file"
 }
 
 day_bucket=86400
 
+scale_bar() {
+  local cells="$1"
+  local left_label="$2"
+  local right_label="$3"
+  local fill=$(( cells - ${#left_label} - ${#right_label} ))
+  if (( fill < 1 )); then
+    printf '%*s' "$cells" '' | tr ' ' '-'
+  else
+    printf '%s%*s%s' "$left_label" "$fill" '' "$right_label"
+  fi
+}
+
 tmp="$OUTPUT_PATH.tmp"
 {
   printf '# updated %s\n\n' "$(date -u -d "@$now" '+%Y-%m-%d %H:%M:%S UTC')"
 
+  printf '%-20s %s\n' '' "$(scale_bar "$DISPLAY_DAYS" "<-${DISPLAY_DAYS}d" "now->")"
   while IFS= read -r line; do
     [ -z "$line" ] && continue
     name=${line%% *}
+    url=${line#* }
     log="$state_dir/$name.log"
     read -r bar pct state < <(render_row "$log" "$now" "$day_bucket" "$DISPLAY_DAYS")
-    printf '%-20s %s %-7s %5s%%\n' "$name" "$bar" "$state" "$pct"
+    printf '%-20s %s %-7s %7s%%  %s\n' "$name" "$bar" "$state" "$pct" "$url"
   done <<< "$SERVICES"
 
-  printf '\nlegend: # up   . degraded   _ down   ? no data\n'
+  printf '\nlegend: = up   - degraded   _ down   . no data   (1 cell = 1 day)\n'
 } > "$tmp"
 
 mv "$tmp" "$OUTPUT_PATH"
