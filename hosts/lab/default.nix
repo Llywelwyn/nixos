@@ -13,6 +13,7 @@
     ./tinyauth.nix
     ./shlink.nix
     ./guestbook.nix
+    ./telegram-alerts.nix
   ];
 
   networking.hostName = "lab";
