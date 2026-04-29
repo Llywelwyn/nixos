@@ -18,6 +18,7 @@
 
   services.uptime = {
     enable = true;
+    interval = "1min";
     services = {
       website = "https://ily.rs";
       forgejo = "https://git.ily.rs";
