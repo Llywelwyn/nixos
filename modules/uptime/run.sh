@@ -138,7 +138,7 @@ tmp="$OUTPUT_PATH.tmp"
     log="$state_dir/$name.log"
     read -r day_bar day_pct _ < <(render_row "$log" "$now" "$day_bucket" "$day_bar_cells")
     read -r hour_bar _ state < <(render_row "$log" "$now" "$hour_bucket" "$hour_bar_cells")
-    printf "%-${name_col}s%s  %s  %-4s  %7s%%  %s\n" \
+    printf "%-${name_col}s%s  %s  %s  %s%%  %s\n" \
       "$name" "$day_bar" "$hour_bar" "$state" "$day_pct" "$url"
   done <<< "$SERVICES"
 
