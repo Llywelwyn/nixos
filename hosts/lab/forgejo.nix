@@ -47,8 +47,16 @@ in
   systemd.services.forgejo.preStart = let
     adminCmd = "${lib.getExe cfg.package} admin user";
     pwd = config.sops.secrets.forgejo-admin-password;
+    marker = "${cfg.stateDir}/.admin-bootstrapped";
   in lib.mkAfter ''
-    ${adminCmd} create --admin --email "lew@ily.rs" \
-      --username lew --password "$(tr -d '\n' < ${pwd.path})" || true
+    if [ ! -e ${marker} ]; then
+      if ${adminCmd} list | grep -qE '^[0-9]+\s+lew\s'; then
+        echo "admin user 'lew' already exists, marking bootstrapped"
+      else
+        ${adminCmd} create --admin --email "lew@ily.rs" \
+          --username lew --password "$(tr -d '\n' < ${pwd.path})"
+      fi
+      touch ${marker}
+    fi
   '';
 }
