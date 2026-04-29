@@ -2,8 +2,62 @@
 let
   cfg = config.services.uptime;
 
-  servicesEnv = lib.concatStringsSep "\n"
-    (lib.mapAttrsToList (name: url: "${name} ${url}") cfg.services);
+  serviceSubmodule = lib.types.submodule {
+    options = {
+      name = lib.mkOption {
+        type = lib.types.str;
+        description = "Service name. Used as the log filename and the row label.";
+      };
+      url = lib.mkOption {
+        type = lib.types.str;
+        description = "URL to probe.";
+      };
+    };
+  };
+
+  categorySubmodule = lib.types.submodule {
+    options = {
+      description = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Free-form text shown above this category's table.";
+      };
+      intervalSeconds = lib.mkOption {
+        type = lib.types.int;
+        default = 60;
+        description = "Minimum interval between probes for services in this category.";
+      };
+      hideUrls = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "If true, omit the URL column when rendering services in this category.";
+      };
+      services = lib.mkOption {
+        type = lib.types.listOf serviceSubmodule;
+        default = [];
+        example = [{ name = "git"; url = "https://git.ily.rs"; }];
+        description = "Ordered list of services to probe. Render order matches list order.";
+      };
+    };
+  };
+
+  configFile = pkgs.writeText "uptime-config" (lib.concatStringsSep "\n" (
+    (lib.imap0 (i: cat:
+      "CAT\t${toString i}\t${toString cat.intervalSeconds}\t${if cat.hideUrls then "1" else "0"}\t${cat.description}"
+    ) cfg.categories)
+    ++
+    (lib.concatLists (lib.imap0 (i: cat:
+      map (svc: "SVC\t${toString i}\t${svc.name}\t${svc.url}") cat.services
+    ) cfg.categories))
+  ));
+
+  introFile = pkgs.writeText "uptime-intro" cfg.intro;
+
+  catIntervals = map (c: c.intervalSeconds) cfg.categories;
+  timerSeconds =
+    if catIntervals == []
+    then 60
+    else lib.foldl' (a: b: if a < b then a else b) 86400 catIntervals;
 
   runScript = pkgs.writeShellApplication {
     name = "uptime-run";
@@ -15,12 +69,6 @@ in
   options.services.uptime = {
     enable = lib.mkEnableOption "minimal text-only uptime status page";
 
-    interval = lib.mkOption {
-      type = lib.types.str;
-      default = "5min";
-      description = "Probe interval, passed to the timer's OnUnitActiveSec.";
-    };
-
     outputPath = lib.mkOption {
       type = lib.types.str;
       default = "/var/lib/uptime/status.txt";
@@ -31,11 +79,16 @@ in
       '';
     };
 
-    services = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      default = {};
-      example = { forgejo = "https://git.ily.rs"; };
-      description = "Map of service name to URL to probe.";
+    intro = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+      description = "Free-form text shown at the top of the status page (before any categories).";
+    };
+
+    categories = lib.mkOption {
+      type = lib.types.listOf categorySubmodule;
+      default = [];
+      description = "Ordered list of service categories. Each is rendered as its own table.";
     };
 
     retentionDays = lib.mkOption {
@@ -47,7 +100,7 @@ in
     displayDays = lib.mkOption {
       type = lib.types.int;
       default = 30;
-      description = "How many days of history to render in the long-term bar (1 cell = 1 day).";
+      description = "How many days of history to render in the long-term bar.";
     };
 
     displayHours = lib.mkOption {
@@ -75,7 +128,8 @@ in
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
       environment = {
-        SERVICES = servicesEnv;
+        CONFIG_PATH = "${configFile}";
+        INTRO_PATH = "${introFile}";
         OUTPUT_PATH = cfg.outputPath;
         RETENTION_DAYS = toString cfg.retentionDays;
         DISPLAY_DAYS = toString cfg.displayDays;
@@ -97,7 +151,7 @@ in
       wantedBy = [ "timers.target" ];
       timerConfig = {
         OnBootSec = "1min";
-        OnUnitActiveSec = cfg.interval;
+        OnUnitActiveSec = "${toString timerSeconds}s";
         Unit = "uptime.service";
       };
     };

@@ -18,15 +18,36 @@
 
   services.uptime = {
     enable = true;
-    interval = "1min";
     displayDays = 90;
-    services = {
-      website = "https://ily.rs";
-      forgejo = "https://git.ily.rs";
-      foundry = "https://foundry.ily.rs";
-      wiki = "https://wiki.ily.rs/health-ping";
-      penfield = "https://penfield.ily.rs";
-    };
+    intro = ''
+      This status page is written in pure bash. It tracks 90 days of
+      historical data per service. Each category may probe at its own
+      interval; that's noted next to the category description.
+    '';
+    categories = [
+      {
+        description = "These first sites are all hosted personally.";
+        intervalSeconds = 60;
+        services = [
+          { name = "website";   url = "https://ily.rs"; }
+          { name = "guestbook"; url = "https://ily.rs/guestbook"; }
+          { name = "git";       url = "https://git.ily.rs"; }
+          { name = "records";   url = "https://c.ily.rs"; }
+          { name = "penfield";  url = "https://penfield.ily.rs"; }
+          { name = "wiki";      url = "https://wiki.ily.rs/health-ping"; }
+          { name = "foundry";   url = "https://foundry.ily.rs"; }
+        ];
+      }
+      {
+        description = "Other services I like to keep track of.";
+        intervalSeconds = 300;
+        hideUrls = true;
+        services = [
+          { name = "co-surf";   url = "https://co-surf.com"; }
+          { name = "frontline"; url = "https://essexfrontline.org.uk"; }
+        ];
+      }
+    ];
   };
 
   networking.hostName = "lab";
