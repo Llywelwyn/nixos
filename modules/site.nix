@@ -51,6 +51,30 @@ let
         default = "pnpm";
       };
 
+      installCommand = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Override install command. Empty string skips install. Null derives from packageManager.";
+      };
+
+      buildCommand = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Override build command. Null derives from packageManager (`<pm> run build`).";
+      };
+
+      extraBuildPackages = mkOption {
+        type = types.listOf types.package;
+        default = [];
+        description = "Extra packages on PATH during build (e.g. zola).";
+      };
+
+      caddyConfig = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Override Caddy extraConfig for the primary domain. Null uses the default static or reverse_proxy block.";
+      };
+
       entryPoint = mkOption {
         type = types.str;
         default = "dist/server/entry.mjs";
@@ -120,12 +144,19 @@ let
         if site.packageManager == "pnpm"
         then "${pkgs.pnpm}/bin/pnpm"
         else "${pkgs.nodejs}/bin/npm";
-      installCmd =
+      defaultInstall =
         if site.packageManager == "pnpm"
         then "${pmBin} install --frozen-lockfile"
         else "${pmBin} ci";
+      defaultBuild = "${pmBin} run build";
+      installCmd =
+        if site.installCommand == null then defaultInstall
+        else site.installCommand;
+      buildCmd =
+        if site.buildCommand == null then defaultBuild
+        else site.buildCommand;
     in
-    { inherit pmBin installCmd; dataDir = site.dataDir; };
+    { inherit pmBin installCmd buildCmd; dataDir = site.dataDir; };
 in
 {
   options.services.site = mkOption {
@@ -142,15 +173,17 @@ in
 
     services.caddy.virtualHosts = mkMerge ((mapAttrsToList (name: site:
       {
-        ${site.domain}.extraConfig = if site.static then ''
-          root * ${site.dataDir}/repo/${site.buildOutputDir}
-          encode zstd gzip
-          try_files {path} /index.html
-          file_server
-        '' else ''
-          reverse_proxy localhost:${toString site.port}
-          encode zstd gzip
-        '';
+        ${site.domain}.extraConfig =
+          if site.caddyConfig != null then site.caddyConfig
+          else if site.static then ''
+            root * ${site.dataDir}/repo/${site.buildOutputDir}
+            encode zstd gzip
+            try_files {path} /index.html
+            file_server
+          '' else ''
+            reverse_proxy localhost:${toString site.port}
+            encode zstd gzip
+          '';
       } // builtins.listToAttrs (map (d: {
         name = d;
         value.extraConfig = ''
@@ -191,7 +224,8 @@ in
           description = "Clone/pull and build ${site.domain}";
           after = [ "network-online.target" ] ++ site.afterServices;
           path = [ pkgs.nodejs pkgs.bash ]
-            ++ optional (site.packageManager == "pnpm") pkgs.pnpm;
+            ++ optional (site.packageManager == "pnpm") pkgs.pnpm
+            ++ site.extraBuildPackages;
           environment = site.buildEnvironment;
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
@@ -210,8 +244,8 @@ in
               cd ${h.dataDir}/repo
               ${pkgs.git}/bin/git fetch origin
               ${pkgs.git}/bin/git reset --hard origin/${site.branch}
-              ${h.installCmd}
-              ${h.pmBin} run build
+              ${lib.optionalString (h.installCmd != "") h.installCmd}
+              ${h.buildCmd}
             '';
             ExecStartPost = lib.mkIf (!site.static)
               "+/run/current-system/sw/bin/systemctl restart ${name}";
@@ -247,7 +281,8 @@ in
           description = "Clone/pull and build preview of ${site.domain}";
           after = [ "network-online.target" ] ++ site.afterServices;
           path = [ pkgs.nodejs pkgs.bash ]
-            ++ optional (site.packageManager == "pnpm") pkgs.pnpm;
+            ++ optional (site.packageManager == "pnpm") pkgs.pnpm
+            ++ site.extraBuildPackages;
           environment = site.buildEnvironment;
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
@@ -266,8 +301,8 @@ in
               cd ${previewDataDir}/repo
               ${pkgs.git}/bin/git fetch origin
               ${pkgs.git}/bin/git reset --hard origin/${site.preview.branch}
-              ${h.installCmd}
-              ${h.pmBin} run build
+              ${lib.optionalString (h.installCmd != "") h.installCmd}
+              ${h.buildCmd}
             '';
             ExecStartPost = lib.mkIf (!site.static)
               "+/run/current-system/sw/bin/systemctl restart ${previewUser}";

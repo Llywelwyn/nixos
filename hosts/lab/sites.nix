@@ -9,6 +9,10 @@
 #   redirectDomains     — domains that 301 to the primary domain (default: [])
 #   branch              — git branch to track (default: "main")
 #   packageManager      — "npm" or "pnpm" (default: "pnpm")
+#   installCommand      — override install command, "" skips, null derives from packageManager (default: null)
+#   buildCommand        — override build command, null derives from packageManager (default: null)
+#   extraBuildPackages  — extra packages on PATH during build, e.g. zola (default: [])
+#   caddyConfig         — override Caddy extraConfig for primary domain, null uses default (default: null)
 #   entryPoint          — Node.js entry point relative to repo root (default: "dist/server/entry.mjs")
 #   environment         — env vars for the running server (default: {})
 #   buildEnvironment    — env vars for building (default: {})
@@ -26,24 +30,40 @@
 #     Forgejo repo -> settings -> Webhooks -> Add webhook
 #   - preview webhook: http://localhost:4323/hooks/${name}-preview-rebuild
 
-{ ... }:
-let
-  websiteData = "/srv/website/data";
-in
+{ pkgs, ... }:
 {
   services.site.website = {
     enable = true;
-    domain = "wynne.rs";
+    domain = "ily.rs";
+    redirectDomains = [ "wynne.rs" ];
     repo = "https://git.ily.rs/lew/website";
     branch = "master";
-    port = 4322;
-    environment = {
-      ASTRO_DB_REMOTE_URL = "file:${websiteData}/guestbook.db";
-    };
-    buildEnvironment = {
-      ASTRO_DB_REMOTE_URL = "file:${websiteData}/guestbook.db";
-    };
-    readWritePaths = [ websiteData ];
+    static = true;
+    buildOutputDir = "public";
+    installCommand = "";
+    buildCommand = "zola build";
+    extraBuildPackages = [ pkgs.zola ];
+    caddyConfig = ''
+      root * /srv/website/repo/public
+      encode zstd gzip
+
+      @guestbook path /guestbook /guestbook/*
+      handle @guestbook {
+        reverse_proxy localhost:8123
+      }
+
+      @site_file file {
+        try_files {path} {path}/index.html
+      }
+      handle @site_file {
+        try_files {path} {path}/index.html
+        file_server
+      }
+
+      handle {
+        reverse_proxy localhost:8080
+      }
+    '';
   };
 
   services.site.penfield = {

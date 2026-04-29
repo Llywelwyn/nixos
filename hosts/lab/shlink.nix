@@ -38,13 +38,6 @@
     '';
   };
 
-  services.caddy.virtualHosts."ily.rs" = {
-    extraConfig = ''
-      reverse_proxy localhost:8080
-      encode zstd gzip
-    '';
-  };
-
   services.caddy.virtualHosts."links.ily.rs" = {
     extraConfig = ''
       @health path /health-ping
