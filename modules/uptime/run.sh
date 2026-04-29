@@ -192,6 +192,7 @@ tmp="$OUTPUT_PATH.tmp"
   done
 
   printf '\nlegend: = up   - degraded   _ down   . no data\n'
+  printf '\nBy: l@ily.rs\n'
 } > "$tmp"
 
 mv "$tmp" "$OUTPUT_PATH"
