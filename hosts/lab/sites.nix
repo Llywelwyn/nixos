@@ -62,6 +62,13 @@ in
         reverse_proxy localhost:8123
       }
 
+      @status path /status
+      handle @status {
+        root * /var/lib/uptime
+        rewrite * /status.txt
+        file_server
+      }
+
       @site_file file {
         try_files {path} {path}/index.html
       }

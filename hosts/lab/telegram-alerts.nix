@@ -29,7 +29,6 @@ let
     "podman-dokuwiki"
     "podman-shlink"
     "podman-shlink-web-client"
-    "podman-uptime-kuma"
     "podman-tinyauth"
     "site-webhook"
   ];

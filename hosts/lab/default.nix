@@ -9,12 +9,23 @@
     ../../modules/site.nix
     ./sites.nix
     ./fail2ban.nix
-    ./uptime-kuma.nix
     ./tinyauth.nix
     ./shlink.nix
     ./guestbook.nix
     ./telegram-alerts.nix
+    ../../modules/uptime
   ];
+
+  services.uptime = {
+    enable = true;
+    services = {
+      website = "https://ily.rs";
+      forgejo = "https://git.ily.rs";
+      foundry = "https://foundry.ily.rs";
+      wiki = "https://wiki.ily.rs";
+      penfield = "https://penfield.ily.rs";
+    };
+  };
 
   networking.hostName = "lab";
 
