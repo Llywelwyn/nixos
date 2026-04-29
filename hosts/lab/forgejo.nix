@@ -11,6 +11,7 @@ in
 
   services.caddy.virtualHosts."git.ily.rs" = {
     extraConfig = ''
+      import favicons
       reverse_proxy localhost:${toString srv.HTTP_PORT}
       encode zstd gzip
     '';

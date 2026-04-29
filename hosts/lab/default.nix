@@ -6,6 +6,7 @@
     ./foundry.nix
     ./dokuwiki.nix
     ./forgejo.nix
+    ../../modules/favicons.nix
     ../../modules/site.nix
     ./sites.nix
     ./fail2ban.nix

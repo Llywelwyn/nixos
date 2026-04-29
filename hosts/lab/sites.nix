@@ -49,6 +49,8 @@ in
     # (light_theme/dark_theme/extra_themes) needs 0.22+. Pull from unstable.
     extraBuildPackages = [ unstable.zola ];
     caddyConfig = ''
+      import favicons
+
       root * /srv/website/repo/public
       encode zstd gzip
 

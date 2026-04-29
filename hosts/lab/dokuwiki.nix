@@ -18,6 +18,8 @@ in
 {
   services.caddy.virtualHosts."wiki.ily.rs" = {
     extraConfig = ''
+      import favicons
+
       @health path /health-ping
       handle @health {
         respond 200

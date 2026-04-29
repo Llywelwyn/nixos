@@ -2,6 +2,7 @@
 {
   services.caddy.virtualHosts."foundry.ily.rs" = {
     extraConfig = ''
+      import favicons
       reverse_proxy localhost:30000
       encode zstd gzip
     '';

@@ -16,6 +16,7 @@
 
   services.caddy.virtualHosts."auth.ily.rs" = {
     extraConfig = ''
+      import favicons
       reverse_proxy localhost:3002
       encode zstd gzip
     '';

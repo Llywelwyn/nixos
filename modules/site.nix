@@ -176,11 +176,13 @@ in
         ${site.domain}.extraConfig =
           if site.caddyConfig != null then site.caddyConfig
           else if site.static then ''
+            import favicons
             root * ${site.dataDir}/repo/${site.buildOutputDir}
             encode zstd gzip
             try_files {path} /index.html
             file_server
           '' else ''
+            import favicons
             reverse_proxy localhost:${toString site.port}
             encode zstd gzip
           '';
@@ -193,6 +195,8 @@ in
     ) cfg) ++ (mapAttrsToList (name: site:
       let previewDataDir = "/srv/${name}-preview"; in {
         ${site.preview.domain}.extraConfig = if site.static then ''
+          import favicons
+
           @health path /health-ping
           handle @health {
             respond 200
@@ -205,6 +209,8 @@ in
             file_server
           }
         '' else ''
+          import favicons
+
           @health path /health-ping
           handle @health {
             respond 200

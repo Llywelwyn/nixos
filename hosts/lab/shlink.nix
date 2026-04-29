@@ -40,6 +40,8 @@
 
   services.caddy.virtualHosts."links.ily.rs" = {
     extraConfig = ''
+      import favicons
+
       @health path /health-ping
       handle @health {
         respond 200
