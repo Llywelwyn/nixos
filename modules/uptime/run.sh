@@ -17,9 +17,9 @@ cat_hideurls=()
 cat_descriptions=()
 while IFS=$'\t' read -r tag idx interval hideurls desc; do
   if [ "$tag" = "CAT" ]; then
-    cat_intervals[$idx]=$interval
-    cat_hideurls[$idx]=$hideurls
-    cat_descriptions[$idx]=$desc
+    cat_intervals[idx]=$interval
+    cat_hideurls[idx]=$hideurls
+    cat_descriptions[idx]=$desc
   fi
 done < "$CONFIG_PATH"
 
@@ -34,7 +34,7 @@ name_col=$(( max_name_len + 2 ))
 # Probe phase: gate per-service by the owning category's intervalSeconds.
 while IFS=$'\t' read -r tag cat_idx name url; do
   [ "$tag" != "SVC" ] && continue
-  interval=${cat_intervals[$cat_idx]}
+  interval=${cat_intervals[cat_idx]}
   log="$state_dir/$name.log"
 
   if [ -s "$log" ]; then
@@ -163,8 +163,8 @@ tmp="$OUTPUT_PATH.tmp"
 
   n_cats=${#cat_intervals[@]}
   for (( cat_idx = 0; cat_idx < n_cats; cat_idx++ )); do
-    desc=${cat_descriptions[$cat_idx]}
-    interval=${cat_intervals[$cat_idx]}
+    desc=${cat_descriptions[cat_idx]}
+    interval=${cat_intervals[cat_idx]}
 
     printf '\n'
     if [ -n "$desc" ]; then
@@ -179,7 +179,7 @@ tmp="$OUTPUT_PATH.tmp"
       log="$state_dir/$name.log"
       read -r day_bar day_pct _ < <(render_row "$log" "$now" "$day_bucket" "$day_bar_cells")
       read -r hour_bar _ state < <(render_row "$log" "$now" "$hour_bucket" "$hour_bar_cells")
-      if [ "${cat_hideurls[$cat_idx]}" = "1" ]; then
+      if [ "${cat_hideurls[cat_idx]}" = "1" ]; then
         printf "%-${name_col}s%s  %s  %s  %s%%\n" \
           "$name" "$day_bar" "$hour_bar" "$state" "$day_pct"
       else
