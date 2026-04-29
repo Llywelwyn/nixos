@@ -13,7 +13,7 @@
     user = "guestbook";
     group = "guestbook";
 
-    siteTitle = "ily [dot] rs";
+    siteTitle = "ily guestbook";
     basePath = "/guestbook";
 
     submissions.enable = true;
