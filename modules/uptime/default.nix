@@ -41,7 +41,7 @@ let
     };
   };
 
-  configFile = pkgs.writeText "uptime-config" (lib.concatStringsSep "\n" (
+  configFile = pkgs.writeText "uptime-config" ((lib.concatStringsSep "\n" (
     (lib.imap0 (i: cat:
       "CAT\t${toString i}\t${toString cat.intervalSeconds}\t${if cat.hideUrls then "1" else "0"}\t${cat.description}"
     ) cfg.categories)
@@ -49,7 +49,7 @@ let
     (lib.concatLists (lib.imap0 (i: cat:
       map (svc: "SVC\t${toString i}\t${svc.name}\t${svc.url}") cat.services
     ) cfg.categories))
-  ));
+  )) + "\n");
 
   introFile = pkgs.writeText "uptime-intro" cfg.intro;
 

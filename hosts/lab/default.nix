@@ -20,13 +20,12 @@
     enable = true;
     displayDays = 90;
     intro = ''
-      This status page is written in pure bash. It tracks 90 days of
-      historical data per service. Each category may probe at its own
-      interval; that's noted next to the category description.
+      This page is written in Bash. It tracks 90 days of historical uptime
+      data for various services. This page regenerates every 1 minute.
     '';
     categories = [
       {
-        description = "These first sites are all hosted personally.";
+        description = "My services";
         intervalSeconds = 60;
         services = [
           { name = "website";   url = "https://ily.rs"; }
@@ -39,7 +38,7 @@
         ];
       }
       {
-        description = "Other services I like to keep track of.";
+        description = "Other services";
         intervalSeconds = 300;
         hideUrls = true;
         services = [
