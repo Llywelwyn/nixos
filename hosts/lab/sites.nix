@@ -49,7 +49,7 @@
 
       @now_legacy path /now.txt /txt/now.txt
       handle @now_legacy {
-        redir /now permanent
+        redir * /now permanent
       }
 
       @guestbook path /guestbook /guestbook/*
