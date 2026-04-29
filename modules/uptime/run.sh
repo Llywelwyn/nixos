@@ -2,12 +2,21 @@
 : "${OUTPUT_PATH:?must be set}"
 : "${RETENTION_DAYS:?must be set}"
 : "${DISPLAY_DAYS:?must be set}"
+: "${DISPLAY_HOURS:?must be set}"
 
 state_dir=$(dirname "$OUTPUT_PATH")
 mkdir -p "$state_dir"
 
 now=$(date -u +%s)
 retention_cutoff=$(( now - RETENTION_DAYS * 86400 ))
+
+max_name_len=0
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  n=${line%% *}
+  (( ${#n} > max_name_len )) && max_name_len=${#n}
+done <<< "$SERVICES"
+name_col=$(( max_name_len + 2 ))
 
 # Probe each service and rotate its log.
 while IFS= read -r line; do
@@ -80,35 +89,64 @@ render_row() {
     }' "$log_file"
 }
 
-day_bucket=86400
+day_bar_cells=30
+day_bucket=$(( DISPLAY_DAYS * 86400 / day_bar_cells ))
+days_per_cell=$(( DISPLAY_DAYS / day_bar_cells ))
+if (( days_per_cell == 1 )); then
+  day_unit="1 day"
+else
+  day_unit="$days_per_cell days"
+fi
+
+hour_bar_cells="$DISPLAY_HOURS"
+hour_bucket=3600
 
 scale_bar() {
-  local cells="$1"
-  local left_label="$2"
-  local right_label="$3"
-  local fill=$(( cells - ${#left_label} - ${#right_label} ))
+  local cells="$1" left="$2" right="$3"
+  local fill=$(( cells - ${#left} - ${#right} ))
   if (( fill < 1 )); then
     printf '%*s' "$cells" '' | tr ' ' '-'
   else
-    printf '%s%*s%s' "$left_label" "$fill" '' "$right_label"
+    printf '%s%*s%s' "$left" "$fill" '' "$right"
   fi
 }
+
+center() {
+  local width="$1" text="$2"
+  local fill=$(( width - ${#text} ))
+  if (( fill <= 0 )); then
+    printf '%s' "$text"
+  else
+    local left_pad=$(( fill / 2 )) right_pad
+    right_pad=$(( fill - left_pad ))
+    printf '%*s%s%*s' "$left_pad" '' "$text" "$right_pad" ''
+  fi
+}
+
+day_scale=$(scale_bar "$day_bar_cells" "<-${DISPLAY_DAYS}d" "now->")
+hour_scale=$(scale_bar "$hour_bar_cells" "<-${DISPLAY_HOURS}h" "now->")
 
 tmp="$OUTPUT_PATH.tmp"
 {
   printf '# updated %s\n\n' "$(date -u -d "@$now" '+%Y-%m-%d %H:%M:%S UTC')"
 
-  printf '%-20s %s\n' '' "$(scale_bar "$DISPLAY_DAYS" "<-${DISPLAY_DAYS}d" "now->")"
+  printf "%-${name_col}s%s  %s\n" '' "$day_scale" "$hour_scale"
   while IFS= read -r line; do
     [ -z "$line" ] && continue
     name=${line%% *}
     url=${line#* }
     log="$state_dir/$name.log"
-    read -r bar pct state < <(render_row "$log" "$now" "$day_bucket" "$DISPLAY_DAYS")
-    printf '%-20s %s %-7s %7s%%  %s\n' "$name" "$bar" "$state" "$pct" "$url"
+    read -r day_bar day_pct _ < <(render_row "$log" "$now" "$day_bucket" "$day_bar_cells")
+    read -r hour_bar _ state < <(render_row "$log" "$now" "$hour_bucket" "$hour_bar_cells")
+    printf "%-${name_col}s%s  %s  %-4s  %7s%%  %s\n" \
+      "$name" "$day_bar" "$hour_bar" "$state" "$day_pct" "$url"
   done <<< "$SERVICES"
 
-  printf '\nlegend: = up   - degraded   _ down   . no data   (1 cell = 1 day)\n'
+  printf "%-${name_col}s%s  %s\n" '' \
+    "$(center "$day_bar_cells" "1 cell = $day_unit")" \
+    "$(center "$hour_bar_cells" "1 cell = 1 hour")"
+
+  printf '\nlegend: = up   - degraded   _ down   . no data\n'
 } > "$tmp"
 
 mv "$tmp" "$OUTPUT_PATH"

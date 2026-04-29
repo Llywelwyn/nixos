@@ -47,7 +47,13 @@ in
     displayDays = lib.mkOption {
       type = lib.types.int;
       default = 30;
-      description = "How many days of history to render in the bar.";
+      description = "How many days of history to render in the long-term bar (1 cell = 1 day).";
+    };
+
+    displayHours = lib.mkOption {
+      type = lib.types.int;
+      default = 24;
+      description = "How many hours of recent history to render in the short-term bar (1 cell = 1 hour).";
     };
   };
 
@@ -73,6 +79,7 @@ in
         OUTPUT_PATH = cfg.outputPath;
         RETENTION_DAYS = toString cfg.retentionDays;
         DISPLAY_DAYS = toString cfg.displayDays;
+        DISPLAY_HOURS = toString cfg.displayHours;
       };
       serviceConfig = {
         Type = "oneshot";
