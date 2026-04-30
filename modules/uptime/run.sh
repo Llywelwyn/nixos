@@ -180,10 +180,10 @@ tmp="$OUTPUT_PATH.tmp"
       read -r day_bar day_pct _ < <(render_row "$log" "$now" "$day_bucket" "$day_bar_cells")
       read -r hour_bar _ state < <(render_row "$log" "$now" "$hour_bucket" "$hour_bar_cells")
       if [ "${cat_hideurls[cat_idx]}" = "1" ]; then
-        printf "%-${name_col}s%s  %s  %s  %s%%\n" \
+        printf "%-${name_col}s%s  %s  %s  %7s%%\n" \
           "$name" "$day_bar" "$hour_bar" "$state" "$day_pct"
       else
-        printf "%-${name_col}s%s  %s  %s  %s%%  %s\n" \
+        printf "%-${name_col}s%s  %s  %s  %7s%%  %s\n" \
           "$name" "$day_bar" "$hour_bar" "$state" "$day_pct" "$url"
       fi
     done < "$CONFIG_PATH"
