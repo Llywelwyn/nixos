@@ -5,7 +5,141 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}}</title>
   <link rel="stylesheet" href="/style.css">
-  {{style}}
+  <style>
+    body {
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .page-container {
+      max-width: 70ch;
+      padding: 1rem;
+      word-wrap: break-word;
+    }
+
+    .guestbook-prompt {
+      display: block;
+      margin-bottom: 1em;
+    }
+
+    .guestbook-label {
+      display: block;
+      font-style: oblique;
+    }
+
+    .guestbook-label::after {
+      content: ":";
+    }
+
+    .guestbook-input {
+      display: block;
+      margin-bottom: 0.4em;
+    }
+
+    .guestbook-textarea {
+      display: block;
+      box-sizing: border-box;
+      max-width: 100%;
+      margin-bottom: 0.4em;
+    }
+
+    .guestbook-button {
+      display: block;
+    }
+
+    .guestbook-canvas {
+      border: 1px solid #000;
+      cursor: crosshair;
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .guestbook-drawing-wrap {
+      display: block;
+      margin-bottom: 0.4em;
+    }
+
+    .guestbook-drawing-tools {
+      display: block;
+    }
+
+    .guestbook-drawing-tools a {
+      cursor: pointer;
+    }
+
+    .guestbook-drawing-content {
+      display: block;
+    }
+
+    .guestbook-swatch {
+      display: inline-block;
+      width: 0.85em;
+      height: 0.85em;
+      border: 1px solid #000;
+      cursor: pointer;
+      vertical-align: middle;
+      box-sizing: border-box;
+      margin: 0 1px;
+    }
+
+    .guestbook-swatch.active {
+      border: 1px solid #000;
+      outline: 1px solid #000;
+    }
+
+    .guestbook-size-slider {
+      width: 4em;
+      vertical-align: middle;
+    }
+
+    .entry-drawing {
+      max-width: 100%;
+    }
+
+    .guestbook-voice-wrap {
+      display: block;
+      margin-bottom: 0.4em;
+    }
+
+    .guestbook-voice-controls a {
+      cursor: pointer;
+    }
+
+    .guestbook-voice-record.recording {
+      color: red;
+    }
+
+    .guestbook-voice-timer {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .guestbook-voice-playback:empty {
+      display: none;
+    }
+
+    .guestbook-voice-playback {
+      display: block;
+      white-space: normal;
+    }
+
+    audio {
+      display: block;
+      height: 2em;
+    }
+
+    .entries dt:not(:first-child) {
+      margin-top: 0.5rem;
+    }
+
+    .entry-name {
+      font-weight: bold;
+    }
+
+    .entry-body {
+      white-space: pre-wrap;
+    }
+  </style>
 </head>
 <body>
   <nav>
