@@ -38,7 +38,7 @@ in
   services.site.website = {
     enable = true;
     domain = "ily.rs";
-    redirectDomains = [ "wynne.rs" ];
+    redirectDomains = [ "wynne.rs" "lewis.wales" ];
     repo = "https://git.ily.rs/lew/website";
     branch = "master";
     static = true;
