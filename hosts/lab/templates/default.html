@@ -11,14 +11,6 @@
       margin-bottom: 1em;
     }
 
-    .guestbook-summary {
-      text-decoration: underline;
-    }
-
-    .guestbook-summary:hover {
-      color: var(--muted);
-    }
-
     .guestbook-label {
       display: block;
       font-style: oblique;
@@ -141,8 +133,7 @@
     <a href="/now/">now</a> ·
     <a href="/guestbook/">guestbook</a>
   </nav>
-  <p>Thanks for visiting. I appreciate all of you who come to leave a message after stopping by. Any messages that do get left will show up as soon as I get the chance to click approve, which is generally pretty fast, as everything is forwarded to my phone.</p>
-  <p>HTML injection is possible and allowed as long as it isn't malicious. Expand the summary below for the submission form.</p>
+  <p>Thanks for visiting. Expand the summary below for the submission form.</p>
   <details class="guestbook-details">
     <summary class="guestbook-summary">Leave an entry</summary>
     {{form}}
