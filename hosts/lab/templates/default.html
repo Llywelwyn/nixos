@@ -37,7 +37,7 @@
     }
 
     .guestbook-canvas {
-      border: 1px solid #000;
+      border: 1px solid black;
       cursor: crosshair;
       display: block;
       max-width: 100%;
@@ -65,7 +65,7 @@
       display: inline-block;
       width: 0.85em;
       height: 0.85em;
-      border: 1px solid #000;
+      border: 1px solid black;
       cursor: pointer;
       vertical-align: middle;
       box-sizing: border-box;
@@ -73,8 +73,8 @@
     }
 
     .guestbook-swatch.active {
-      border: 1px solid #000;
-      outline: 1px solid #000;
+      border: 1px solid black;
+      outline: 1px solid black;
     }
 
     .guestbook-size-slider {
@@ -96,7 +96,7 @@
     }
 
     .guestbook-voice-record.recording {
-      color: red;
+      font-weight: bold;
     }
 
     .guestbook-voice-timer {
@@ -117,8 +117,8 @@
       height: 2em;
     }
 
-    .entry-name {
-      font-weight: bold;
+    .entry-date {
+      color: var(--muted);
     }
 
     .entry-body {
@@ -128,16 +128,16 @@
 </head>
 <body>
   <nav>
-    <a href="/">ily [dot] rs</a> |
-    <a href="/links/">links</a> |
-    <a href="/now/">now</a> |
-    sign the <a href="/guestbook/">guestbook</a>
+    <a href="/">home</a> ·
+    <a href="/links/">links</a> ·
+    <a href="/now/">now</a> ·
+    <a href="/guestbook/">guestbook</a>
   </nav>
   <details class="guestbook-details" style="margin-top: 0.5em">
-  <summary class="guestbook-summary">Click me to leave an entry</summary>
+  <summary class="guestbook-summary">Leave an entry</summary>
   {{form}}
   </details>
-  <h1>messages</h1>
+  <h1>Messages</h1>
   {{entries}}
 </body>
 </html>
