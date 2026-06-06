@@ -25,6 +25,8 @@ let
     "caddy"
     "postgresql"
     "guestbook"
+    "rustypaste"
+    "rustypaste-notify"
     "podman-foundry"
     "podman-dokuwiki"
     "podman-shlink"

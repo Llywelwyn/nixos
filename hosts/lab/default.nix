@@ -13,6 +13,7 @@
     ./tinyauth.nix
     ./shlink.nix
     ./guestbook.nix
+    ./rustypaste.nix
     ./telegram-alerts.nix
     ../../modules/uptime
   ];
@@ -31,6 +32,7 @@
         services = [
           { name = "website";   url = "https://ily.rs"; }
           { name = "guestbook"; url = "https://ily.rs/guestbook"; }
+          { name = "file";      url = "https://file.ily.rs/health-ping"; }
           { name = "git";       url = "https://git.ily.rs"; }
           { name = "records";   url = "https://c.ily.rs"; }
           { name = "penfield";  url = "https://penfield.ily.rs"; }
