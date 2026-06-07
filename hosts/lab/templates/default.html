@@ -137,19 +137,19 @@
     }
 
     .entries .entry-header {
+      border-top: 1px solid var(--muted);
       margin-top: 1.5rem;
+      padding-top: 1.5rem;
     }
 
     .entries .entry-header:first-child {
+      border-top: 0;
       margin-top: 0;
+      padding-top: 0;
     }
 
     .entry-date {
-      color: var(--muted);
-    }
-
-    .entry-name {
-      font-weight: bold;
+      display: none;
     }
 
     .entry-body {
@@ -168,11 +168,11 @@
     <a href="/now/">Now</a><br>
     <a href="/guestbook/">Guestbook</a>
   </nav>
+  <h1>Guestbook</h1>
   <details class="guestbook-details">
-    <summary class="guestbook-summary">Leave an entry</summary>
+    <summary class="guestbook-summary">Click here to leave an entry.</summary>
     {{form}}
   </details>
-  <h1>Messages</h1>
   {{entries}}
 </body>
 </html>
