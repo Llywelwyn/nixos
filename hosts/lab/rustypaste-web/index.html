@@ -19,7 +19,6 @@
 
   .stage { display: none; }
   .stage.show { display: block; }
-  .stage .fname { font-style: italic; }
   .stage label + label { margin-left: 1.5rem; }
   .stage select:disabled { opacity: .4; }
 
@@ -33,13 +32,13 @@
   <p>On September 30, 2025, Imgur blocked users from the united Kingdom in response ot a potential fine from the Information Commissioner's Office regarding its handling of children's personal data.<sup><a href="https://www.bbc.co.uk/news/articles/c4gzxv5gy3qo">[1]</a></sup></p>
   <p>I don't particularly trust any company to handle my data. This host is open to the public and images will be held indefinitely provided they aren't spam, and are likely to remain available unless I get hit by a bus at some point.</p>
   <p>If you want something deleted, reach out to me at site@ily.rs.</p>
-  <p>Drop a file, paste, or <a href="#" id="pick">click here</a> to choose one &mdash; then set how long it should live and hit upload.</p>
+  <p>Drop a file, paste, or <a href="#" id="pick">click here</a>.</p>
   <p>Or curl:<br>&emsp;<code>curl -F 'file=@example.txt' https://file.ily.rs</code></p>
   <p>All of the above said, I don't recommend you trust me with anything important either. There's no guarantee I wont do something malicious, shut down the host arbitrarily without warning, or get struck by lightning. I recommend using a service that is audited regularly if you insist on using one.</p>
   <input type="file" id="file">
 
   <div class="stage" id="stage">
-    <p>Selected: <span class="fname" id="fname"></span> &mdash; <a href="#" id="cancel">cancel</a></p>
+    <p>Selected: <span id="fname"></span> <a href="#" id="cancel">cancel</a></p>
     <p>
       <label>Expires <select id="expire">
         <option value="">never</option>
@@ -49,7 +48,7 @@
         <option value="1w">1 week</option>
         <option value="1month">1 month</option>
       </select></label>
-      <label><input type="checkbox" id="oneshot"> one-shot <span style="font-style:italic">(deleted after first view)</span></label>
+      <label><input type="checkbox" id="oneshot"> one-shot (deleted after first view)</label>
     </p>
     <p><button id="upload">Upload</button></p>
   </div>
