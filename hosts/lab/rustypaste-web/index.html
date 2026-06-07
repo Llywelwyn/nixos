@@ -17,10 +17,8 @@
   .err { display: none; color: #c00; }
   .err.show { display: block; }
 
-  .stage { display: none; }
-  .stage.show { display: block; }
-  .stage label + label { margin-left: 1.5rem; }
-  .stage select:disabled { opacity: .4; }
+  .opts label + label { margin-left: 1.5rem; }
+  .opts select:disabled { opacity: .4; }
 
   .mascot { position: fixed; right: 2rem; bottom: 0; width: 280px; user-select: none; }
   .mascot img { width: 100%; -webkit-user-drag: none; user-drag: none; }
@@ -33,25 +31,20 @@
   <p>I don't particularly trust any company to handle my data. This host is open to the public and images will be held indefinitely provided they aren't spam, and are likely to remain available unless I get hit by a bus at some point.</p>
   <p>If you want something deleted, reach out to me at site@ily.rs.</p>
   <p>Drop a file, paste, or <a href="#" id="pick">click here</a>.</p>
+  <p class="opts">
+    <label>Expires <select id="expire">
+      <option value="">never</option>
+      <option value="10min">10 minutes</option>
+      <option value="1h">1 hour</option>
+      <option value="1d">1 day</option>
+      <option value="1w">1 week</option>
+      <option value="1month">1 month</option>
+    </select></label>
+    <label><input type="checkbox" id="oneshot"> one-shot (deleted after first view)</label>
+  </p>
   <p>Or curl:<br>&emsp;<code>curl -F 'file=@example.txt' https://file.ily.rs</code></p>
   <p>All of the above said, I don't recommend you trust me with anything important either. There's no guarantee I wont do something malicious, shut down the host arbitrarily without warning, or get struck by lightning. I recommend using a service that is audited regularly if you insist on using one.</p>
   <input type="file" id="file">
-
-  <div class="stage" id="stage">
-    <p>Selected: <span id="fname"></span> <a href="#" id="cancel">cancel</a></p>
-    <p>
-      <label>Expires <select id="expire">
-        <option value="">never</option>
-        <option value="10min">10 minutes</option>
-        <option value="1h">1 hour</option>
-        <option value="1d">1 day</option>
-        <option value="1w">1 week</option>
-        <option value="1month">1 month</option>
-      </select></label>
-      <label><input type="checkbox" id="oneshot"> one-shot (deleted after first view)</label>
-    </p>
-    <p><button id="upload">Upload</button></p>
-  </div>
 
   <div class="bar" id="bar"><i id="fill"></i></div>
 
@@ -64,34 +57,24 @@
   const $ = id => document.getElementById(id);
   const pick=$('pick'), input=$('file'), bar=$('bar'), fill=$('fill'),
         result=$('result'), link=$('link'), copy=$('copy'), err=$('err'),
-        stage=$('stage'), fname=$('fname'), cancel=$('cancel'),
-        expire=$('expire'), oneshot=$('oneshot'), upload=$('upload');
-
-  let pending=null;
+        expire=$('expire'), oneshot=$('oneshot');
 
   function reset(){ result.classList.remove('show'); err.classList.remove('show');
     bar.classList.remove('on'); fill.style.width='0'; }
   function setProgress(p){ bar.classList.add('on'); fill.style.width=(p*100).toFixed(0)+'%'; }
-  function fail(m){ err.textContent='Error: '+m; err.classList.add('show'); bar.classList.remove('on');
-    upload.disabled=false; }
+  function fail(m){ err.textContent='Error: '+m; err.classList.add('show'); bar.classList.remove('on'); }
   function done(url){ fill.style.width='100%'; setTimeout(()=>bar.classList.remove('on'),300);
-    link.textContent=url; link.href=url; result.classList.add('show'); clear(); }
+    link.textContent=url; link.href=url; result.classList.add('show'); }
 
-  // Hold the chosen file and reveal the options; nothing uploads until Upload.
-  function stageFile(file){ pending=file; fname.textContent=file.name;
-    stage.classList.add('show'); reset(); }
-  function clear(){ pending=null; stage.classList.remove('show'); input.value=''; }
-
-  function send(){
-    if(!pending) return;
-    reset(); upload.disabled=true;
+  function send(file){
+    reset();
     const xhr=new XMLHttpRequest(); const fd=new FormData();
     // One-shot uploads use the 'oneshot' field instead of 'file'.
-    fd.append(oneshot.checked?'oneshot':'file', pending, pending.name);
+    fd.append(oneshot.checked?'oneshot':'file', file, file.name);
     xhr.open('POST', '/');
     if(expire.value) xhr.setRequestHeader('expire', expire.value);
     xhr.upload.onprogress=e=>{ if(e.lengthComputable) setProgress(e.loaded/e.total); };
-    xhr.onload=()=>{ upload.disabled=false; (xhr.status>=200&&xhr.status<300)
+    xhr.onload=()=>{ (xhr.status>=200&&xhr.status<300)
       ? done(xhr.responseText.trim()) : fail('server returned '+xhr.status); };
     xhr.onerror=()=>fail('upload failed (network error)');
     xhr.send(fd);
@@ -99,16 +82,14 @@
 
   // One-shot already deletes on first view, so an expiry is moot.
   oneshot.addEventListener('change', ()=>{ expire.disabled=oneshot.checked; });
-  upload.addEventListener('click', e=>{ e.preventDefault(); send(); });
-  cancel.addEventListener('click', e=>{ e.preventDefault(); clear(); reset(); });
 
   pick.addEventListener('click', e=>{ e.preventDefault(); input.click(); });
-  input.addEventListener('change', ()=>{ if(input.files[0]) stageFile(input.files[0]); });
+  input.addEventListener('change', ()=>{ if(input.files[0]) send(input.files[0]); });
 
   window.addEventListener('dragover', e=>e.preventDefault());
   window.addEventListener('drop', e=>{ e.preventDefault();
-    const f=e.dataTransfer.files[0]; if(f) stageFile(f); });
-  window.addEventListener('paste', e=>{ const f=[...e.clipboardData.files][0]; if(f) stageFile(f); });
+    const f=e.dataTransfer.files[0]; if(f) send(f); });
+  window.addEventListener('paste', e=>{ const f=[...e.clipboardData.files][0]; if(f) send(f); });
   copy.addEventListener('click', async e=>{ e.preventDefault(); try{ await navigator.clipboard.writeText(link.href);
     copy.textContent='copied'; setTimeout(()=>copy.textContent='copy',1400);
   }catch{ fail('clipboard blocked'); } });
