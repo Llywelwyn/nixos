@@ -52,17 +52,14 @@ This returns the URL of the uploaded file.</pre>
   <p><span class="result" id="result"><a id="link" href="#" target="_blank" rel="noopener"></a> — <a href="#" id="copy">copy</a></span></p>
   <p class="err" id="err"></p>
 
-  <p><label><input type="checkbox" id="demo"> demo mode</label></p>
-
   <div class="mascot" id="mascot"><img id="joi" src="joi.png" alt=""></div>
 
 <script>
   const ENDPOINT = location.protocol === 'file:' ? 'https://file.ily.rs/' : '/';
   const $ = id => document.getElementById(id);
   const pick=$('pick'), input=$('file'), bar=$('bar'), fill=$('fill'),
-        result=$('result'), link=$('link'), copy=$('copy'), err=$('err'), demo=$('demo');
+        result=$('result'), link=$('link'), copy=$('copy'), err=$('err');
 
-  demo.checked = location.protocol === 'file:';
   $('joi').addEventListener('error', () => $('mascot').classList.add('no-img'));
 
   function reset(){ result.classList.remove('show'); err.classList.remove('show');
@@ -74,18 +71,12 @@ This returns the URL of the uploaded file.</pre>
 
   function send(file){
     reset();
-    if(demo.checked){
-      let p=0; const t=setInterval(()=>{ p+=Math.random()*.25; setProgress(Math.min(p,1));
-        if(p>=1){ clearInterval(t); const ext=(file.name.split('.').pop()||'bin');
-          done('https://file.ily.rs/'+Math.random().toString(36).slice(2,5)+'.'+ext); } },120);
-      return;
-    }
     const xhr=new XMLHttpRequest(); const fd=new FormData(); fd.append('file', file, file.name);
     xhr.open('POST', ENDPOINT);
     xhr.upload.onprogress=e=>{ if(e.lengthComputable) setProgress(e.loaded/e.total); };
     xhr.onload=()=>{ (xhr.status>=200&&xhr.status<300)
       ? done(xhr.responseText.trim()) : fail('server returned '+xhr.status); };
-    xhr.onerror=()=>fail('network / CORS (use demo mode locally)');
+    xhr.onerror=()=>fail('upload failed (network error)');
     xhr.send(fd);
   }
 
