@@ -171,7 +171,7 @@
 
     .mascot {
       position: fixed;
-      right: 2rem;
+      right: calc(2rem - (100vw - 100%));
       bottom: 0;
       width: 280px;
       user-select: none;
@@ -203,7 +203,7 @@
     {{form}}
   </details>
   {{entries}}
-  <div class="mascot"><img src="https://file.ily.rs/joi.png" alt="" draggable="false"></div>
+  <div class="mascot"><img src="/joi.png" alt="" draggable="false"></div>
   <script>
     (function () {
       document.querySelectorAll('.entry-drawing').forEach(function (img) {
