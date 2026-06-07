@@ -21,6 +21,10 @@
       color: var(--muted);
     }
 
+    .guestbook-details {
+      margin-bottom: 1rem;
+    }
+
     .guestbook-prompt {
       display: block;
       margin-bottom: 1em;
@@ -137,19 +141,20 @@
     }
 
     .entries .entry-header {
-      border-top: 1px solid var(--muted);
-      margin-top: 1.5rem;
-      padding-top: 1.5rem;
+      margin-top: 1rem;
     }
 
     .entries .entry-header:first-child {
-      border-top: 0;
       margin-top: 0;
-      padding-top: 0;
     }
 
     .entry-date {
       display: none;
+    }
+
+    .entry-header::after {
+      content: " on " attr(title);
+      color: var(--muted);
     }
 
     .entry-body {
@@ -158,6 +163,30 @@
 
     .entry-drawing-wrap {
       margin-top: 0.3rem;
+    }
+
+    .entry-attach {
+      cursor: pointer;
+    }
+
+    .mascot {
+      position: fixed;
+      right: 2rem;
+      bottom: 0;
+      width: 280px;
+      user-select: none;
+    }
+
+    .mascot img {
+      width: 100%;
+      -webkit-user-drag: none;
+      user-drag: none;
+    }
+
+    @media (max-width: 700px) {
+      .mascot {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -170,9 +199,27 @@
   </nav>
   <h1>Guestbook</h1>
   <details class="guestbook-details">
-    <summary class="guestbook-summary">Click here to leave an entry.</summary>
+    <summary class="guestbook-summary">Click here to leave an entry</summary>
     {{form}}
   </details>
   {{entries}}
+  <div class="mascot"><img src="https://file.ily.rs/joi.png" alt="" draggable="false"></div>
+  <script>
+    (function () {
+      document.querySelectorAll('.entry-drawing').forEach(function (img) {
+        var name = img.getAttribute('src').split('/').pop();
+        var link = document.createElement('a');
+        link.href = '#';
+        link.className = 'entry-attach';
+        link.textContent = '[attached: ' + name + ']';
+        img.style.display = 'none';
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          img.style.display = (img.style.display === 'none') ? 'block' : 'none';
+        });
+        img.parentNode.insertBefore(link, img);
+      });
+    })();
+  </script>
 </body>
 </html>
