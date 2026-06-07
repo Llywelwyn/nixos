@@ -13,7 +13,7 @@ let
       upload_path = "/srv/rustypaste/upload";
       timeout = "30s";
       expose_version = false;
-      expose_list = false;
+      expose_list = true;
       handle_spaces = "replace";
     };
 
@@ -32,7 +32,7 @@ let
     };
 
     paste = {
-      random_url = { type = "petname"; words = 2; separator = "-"; };
+      random_url = { type = "alphanumeric"; length = 3; };
       default_extension = "txt";
       mime_override = [
         { mime = "image/jpeg"; regex = "^.*\\.jpg$"; }
@@ -138,15 +138,35 @@ in
   services.caddy.virtualHosts."file.ily.rs" = {
     extraConfig = ''
       import favicons
+      encode zstd gzip
+      root * ${./rustypaste-web}
 
       @health path /health-ping
       handle @health {
         respond 200
       }
 
+      # upload page at the root
+      @page {
+        method GET
+        path /
+      }
+      handle @page {
+        file_server
+      }
+
+      # static assets (joi.png, etc.) if they exist on disk
+      @asset {
+        method GET
+        file
+      }
+      handle @asset {
+        file_server
+      }
+
+      # everything else (uploads, downloads, /list) -> rustypaste
       handle {
         reverse_proxy localhost:${toString port}
-        encode zstd gzip
       }
     '';
   };

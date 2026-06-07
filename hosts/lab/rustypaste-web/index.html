@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width,initial-scale=1" name="viewport">
+<title>file.ily.rs</title>
+<style>
+  body { background: black; color: white; margin: 3ch 3ch 0; }
+  a { color: white; }
+
+  pre { margin: 0; }
+  input[type=file] { display: none; }
+
+  /* the whole page is the drop target; the trigger is just a line of text */
+  body.drag::after {
+    content: "drop it";
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.6); outline: 2px dashed #888; outline-offset: -14px;
+  }
+
+  .bar { display: none; box-sizing: border-box; width: 51ch; max-width: 100%; height: 3px; background: #333; margin: .5em 0; }
+  .bar.on { display: block; }
+  .bar i { display: block; height: 100%; width: 0; background: white; }
+
+  .result { display: none; }
+  .result.show { display: inline; }
+  .err { display: none; color: #f66; }
+  .err.show { display: block; }
+
+  .mascot { position: fixed; right: 2em; bottom: 0; width: 280px; }
+  .mascot img { width: 100%; display: block; }
+  .mascot.no-img { width: 170px; height: 280px; border: 1px dashed gray; }
+  .mascot.no-img img { display: none; }
+  .mascot.no-img::after { content: "joi.png"; color: gray; }
+</style>
+</head>
+<body>
+  <pre>
+
+You look lonely. I can fix that.
+
+Drop a file anywhere or <a href="#" id="pick">click to upload</a>.
+
+Or use curl:
+    curl -F 'file=@example.txt' https://file.ily.rs
+This returns the URL of the uploaded file.</pre>
+  <input type="file" id="file">
+
+  <div class="bar" id="bar"><i id="fill"></i></div>
+
+  <p><span class="result" id="result"><a id="link" href="#" target="_blank" rel="noopener"></a> — <a href="#" id="copy">copy</a></span></p>
+  <p class="err" id="err"></p>
+
+  <p><label><input type="checkbox" id="demo"> demo mode</label></p>
+
+  <div class="mascot" id="mascot"><img id="joi" src="joi.png" alt=""></div>
+
+<script>
+  const ENDPOINT = location.protocol === 'file:' ? 'https://file.ily.rs/' : '/';
+  const $ = id => document.getElementById(id);
+  const pick=$('pick'), input=$('file'), bar=$('bar'), fill=$('fill'),
+        result=$('result'), link=$('link'), copy=$('copy'), err=$('err'), demo=$('demo');
+
+  demo.checked = location.protocol === 'file:';
+  $('joi').addEventListener('error', () => $('mascot').classList.add('no-img'));
+
+  function reset(){ result.classList.remove('show'); err.classList.remove('show');
+    bar.classList.remove('on'); fill.style.width='0'; }
+  function setProgress(p){ bar.classList.add('on'); fill.style.width=(p*100).toFixed(0)+'%'; }
+  function fail(m){ err.textContent='Error: '+m; err.classList.add('show'); bar.classList.remove('on'); }
+  function done(url){ fill.style.width='100%'; setTimeout(()=>bar.classList.remove('on'),300);
+    link.textContent=url; link.href=url; result.classList.add('show'); }
+
+  function send(file){
+    reset();
+    if(demo.checked){
+      let p=0; const t=setInterval(()=>{ p+=Math.random()*.25; setProgress(Math.min(p,1));
+        if(p>=1){ clearInterval(t); const ext=(file.name.split('.').pop()||'bin');
+          done('https://file.ily.rs/'+Math.random().toString(36).slice(2,5)+'.'+ext); } },120);
+      return;
+    }
+    const xhr=new XMLHttpRequest(); const fd=new FormData(); fd.append('file', file, file.name);
+    xhr.open('POST', ENDPOINT);
+    xhr.upload.onprogress=e=>{ if(e.lengthComputable) setProgress(e.loaded/e.total); };
+    xhr.onload=()=>{ (xhr.status>=200&&xhr.status<300)
+      ? done(xhr.responseText.trim()) : fail('server returned '+xhr.status); };
+    xhr.onerror=()=>fail('network / CORS (use demo mode locally)');
+    xhr.send(fd);
+  }
+
+  pick.addEventListener('click', e=>{ e.preventDefault(); input.click(); });
+  input.addEventListener('change', ()=>{ if(input.files[0]) send(input.files[0]); });
+
+  // whole window is the drop zone (counter avoids flicker over child nodes)
+  let dragn=0;
+  window.addEventListener('dragenter', e=>{ e.preventDefault(); if(!dragn++) document.body.classList.add('drag'); });
+  window.addEventListener('dragover', e=>e.preventDefault());
+  window.addEventListener('dragleave', e=>{ e.preventDefault(); if(!--dragn) document.body.classList.remove('drag'); });
+  window.addEventListener('drop', e=>{ e.preventDefault(); dragn=0; document.body.classList.remove('drag');
+    const f=e.dataTransfer.files[0]; if(f) send(f); });
+  window.addEventListener('paste', e=>{ const f=[...e.clipboardData.files][0]; if(f) send(f); });
+  copy.addEventListener('click', async e=>{ e.preventDefault(); try{ await navigator.clipboard.writeText(link.href);
+    copy.textContent='copied'; setTimeout(()=>copy.textContent='copy',1400);
+  }catch{ fail('clipboard blocked'); } });
+</script>
+</body>
+</html>
