@@ -6,6 +6,21 @@
   <title>{{title}}</title>
   <link rel="stylesheet" href="/style.css">
   <style>
+    .guestbook-summary {
+      list-style: none;
+      cursor: pointer;
+      width: fit-content;
+      text-decoration: underline;
+    }
+
+    .guestbook-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .guestbook-summary:hover {
+      color: var(--muted);
+    }
+
     .guestbook-prompt {
       display: block;
       margin-bottom: 1em;
@@ -117,12 +132,32 @@
       height: 2em;
     }
 
+    .entries {
+      margin: 0;
+    }
+
+    .entries .entry-header {
+      margin-top: 1.5rem;
+    }
+
+    .entries .entry-header:first-child {
+      margin-top: 0;
+    }
+
     .entry-date {
       color: var(--muted);
     }
 
+    .entry-name {
+      font-weight: bold;
+    }
+
     .entry-body {
       white-space: pre-wrap;
+    }
+
+    .entry-drawing-wrap {
+      margin-top: 0.3rem;
     }
   </style>
 </head>
@@ -133,7 +168,6 @@
     <a href="/now/">Now</a><br>
     <a href="/guestbook/">Guestbook</a>
   </nav>
-  <p>Thanks for visiting. Expand the summary below for the submission form.</p>
   <details class="guestbook-details">
     <summary class="guestbook-summary">Leave an entry</summary>
     {{form}}
