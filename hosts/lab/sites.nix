@@ -102,4 +102,15 @@ in
     buildOutputDir = "build";
     packageManager = "npm";
   };
+
+  services.site.x = {
+    enable = true;
+    domain = "x.ily.rs";
+    repo = "https://git.ily.rs/lew/x";
+    branch = "main";
+    static = true;
+    buildOutputDir = ".";
+    installCommand = "";
+    buildCommand = "";
+  };
 }
