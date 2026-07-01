@@ -32,18 +32,22 @@ done < "$CONFIG_PATH"
 name_col=$(( max_name_len + 2 ))
 
 # Probe phase: gate per-service by the owning category's intervalSeconds.
-while IFS=$'\t' read -r tag cat_idx name url; do
-  [ "$tag" != "SVC" ] && continue
-  interval=${cat_intervals[cat_idx]}
-  log="$state_dir/$name.log"
+# Each probe runs in the background so one slow or dead service doesn't
+# stretch the whole run past the timer interval. Logs are per-service, so
+# concurrent probes never touch the same file.
+probe() {
+  local interval="$1" name="$2" url="$3"
+  local log="$state_dir/$name.log"
+  local last_ts age code up
 
   if [ -s "$log" ]; then
     last_ts=$(tail -n 1 "$log" | awk '{print $1}')
     age=$(( now - last_ts ))
-    (( age < interval )) && continue
+    (( age < interval )) && return 0
   fi
 
-  code=$(curl -fsS --max-time 10 -o /dev/null -w '%{http_code}' "$url" 2>/dev/null || true)
+  code=$(curl -fsS --max-time 10 --retry 1 --retry-connrefused \
+    -o /dev/null -w '%{http_code}' "$url" 2>/dev/null || true)
   if [ -z "$code" ] || [ "$code" = "000" ]; then
     code="000"
     up=0
@@ -56,7 +60,13 @@ while IFS=$'\t' read -r tag cat_idx name url; do
 
   awk -v cutoff="$retention_cutoff" '$1 >= cutoff' "$log" > "$log.tmp"
   mv "$log.tmp" "$log"
+}
+
+while IFS=$'\t' read -r tag cat_idx name url; do
+  [ "$tag" != "SVC" ] && continue
+  probe "${cat_intervals[cat_idx]}" "$name" "$url" < /dev/null &
 done < "$CONFIG_PATH"
+wait
 
 # Render helpers.
 render_row() {
@@ -65,7 +75,7 @@ render_row() {
   if [ ! -s "$log_file" ]; then
     local pad
     pad=$(printf '%*s' "$cells" '' | tr ' ' '.')
-    printf '%s 0.000 unknown\n' "$pad"
+    printf '%s 0.000 unknown -\n' "$pad"
     return
   fi
 
@@ -75,6 +85,7 @@ render_row() {
       window_start = bucket_origin - (cells - 1) * bucket
       window_end = bucket_origin + bucket
       last_ok = -1
+      last_code = "-"
     }
     {
       ts = $1; ok = $2
@@ -85,6 +96,7 @@ render_row() {
         }
       }
       last_ok = ok
+      last_code = $3
     }
     END {
       bar = ""; total_up = 0; total_all = 0
@@ -99,7 +111,7 @@ render_row() {
       }
       pct = (total_all == 0) ? 0 : (100 * total_up / total_all)
       state = (last_ok == 1) ? "up" : (last_ok == 0) ? "down" : "unknown"
-      printf "%s %.3f %s\n", bar, pct, state
+      printf "%s %.3f %s %s\n", bar, pct, state, last_code
     }' "$log_file"
 }
 
@@ -178,12 +190,17 @@ tmp="$OUTPUT_PATH.tmp"
       [ "$c_idx" != "$cat_idx" ] && continue
       log="$state_dir/$name.log"
       read -r day_bar day_pct _ < <(render_row "$log" "$now" "$day_bucket" "$day_bar_cells")
-      read -r hour_bar _ state < <(render_row "$log" "$now" "$hour_bucket" "$hour_bar_cells")
+      read -r hour_bar _ state code < <(render_row "$log" "$now" "$hour_bucket" "$hour_bar_cells")
+      if [ "$state" = "down" ]; then
+        state="down ($code)"
+      fi
+      # state_col fits the widest state, "down (000)".
+      state_col=10
       if [ "${cat_hideurls[cat_idx]}" = "1" ]; then
-        printf "%-${name_col}s%s  %s  %s  %7s%%\n" \
+        printf "%-${name_col}s%s  %s  %-${state_col}s  %7s%%\n" \
           "$name" "$day_bar" "$hour_bar" "$state" "$day_pct"
       else
-        printf "%-${name_col}s%s  %s  %s  %7s%%  %s\n" \
+        printf "%-${name_col}s%s  %s  %-${state_col}s  %7s%%  %s\n" \
           "$name" "$day_bar" "$hour_bar" "$state" "$day_pct" "$url"
       fi
     done < "$CONFIG_PATH"

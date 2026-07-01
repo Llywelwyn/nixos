@@ -1,4 +1,8 @@
 { pkgs, ... }:
+let
+  uptimeDisplayDays = 90;
+  uptimeFastInterval = 60;
+in
 {
   imports = [
     ./hardware-configuration.nix
@@ -19,15 +23,17 @@
 
   services.uptime-page = {
     enable = true;
-    displayDays = 90;
+    displayDays = uptimeDisplayDays;
     intro = ''
-      This page is written in Bash. It tracks 90 days of historical uptime
-      data for various services. This page regenerates every 1 minute.
+      This page is written in Bash. It tracks ${toString uptimeDisplayDays} days of historical uptime
+      data for various services. This page regenerates every ${toString uptimeFastInterval} seconds.
+      Probes run from the same machine that hosts these services, so a
+      gap (.) can also mean the machine itself was down.
     '';
     categories = [
       {
         description = "My services";
-        intervalSeconds = 60;
+        intervalSeconds = uptimeFastInterval;
         services = [
           { name = "website";   url = "https://ily.rs"; }
           { name = "guestbook"; url = "https://ily.rs/guestbook"; }
@@ -37,6 +43,8 @@
           { name = "penfield";  url = "https://penfield.ily.rs"; }
           { name = "wiki";      url = "https://wiki.ily.rs/health-ping"; }
           { name = "foundry";   url = "https://foundry.ily.rs"; }
+          { name = "auth";      url = "https://auth.ily.rs"; }
+          { name = "x";         url = "https://x.ily.rs"; }
         ];
       }
       {
