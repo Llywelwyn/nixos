@@ -42,16 +42,14 @@ in
         file_server
       }
 
-      @site_file file {
-        try_files {path} {path}/index.html
-      }
-      handle @site_file {
+      handle {
         try_files {path} {path}/index.html
         file_server
       }
 
-      handle {
-        reverse_proxy localhost:8080
+      handle_errors 404 {
+        rewrite * /404.html
+        file_server
       }
     '';
   };

@@ -11,7 +11,6 @@
     ./sites.nix
     ./fail2ban.nix
     ./tinyauth.nix
-    ./shlink.nix
     ./guestbook.nix
     ./rustypaste.nix
     ./telegram-alerts.nix
@@ -82,6 +81,7 @@
   virtualisation.containers.enable = true;
   virtualisation.podman = {
     enable = true;
+    autoPrune.enable = true;
     defaultNetwork.settings.dns_enabled = true;
   };
   virtualisation.oci-containers.backend = "podman";

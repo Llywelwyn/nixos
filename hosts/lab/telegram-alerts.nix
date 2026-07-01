@@ -23,7 +23,6 @@ let
   alertedServices = [
     "forgejo"
     "caddy"
-    "postgresql"
     "guestbook"
     "rustypaste"
     "rustypaste-notify"
