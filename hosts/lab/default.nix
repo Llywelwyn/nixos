@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ pkgs, ... }:
 {
   imports = [
     ./hardware-configuration.nix
@@ -17,7 +17,7 @@
     ../../modules/uptime
   ];
 
-  services.uptime = {
+  services.uptime-page = {
     enable = true;
     displayDays = 90;
     intro = ''
@@ -85,11 +85,6 @@
     defaultNetwork.settings.dns_enabled = true;
   };
   virtualisation.oci-containers.backend = "podman";
-
-  # Workaround for NixOS/nixpkgs#410857 until backport of #475089 lands
-  systemd.services = lib.mapAttrs'
-    (name: _: lib.nameValuePair "podman-${name}" { serviceConfig.Delegate = true; })
-    config.virtualisation.oci-containers.containers;
 
   sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 

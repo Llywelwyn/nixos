@@ -1,6 +1,6 @@
 { config, lib, pkgs, ... }:
 let
-  cfg = config.services.uptime;
+  cfg = config.services.uptime-page;
 
   serviceSubmodule = lib.types.submodule {
     options = {
@@ -66,7 +66,7 @@ let
   };
 in
 {
-  options.services.uptime = {
+  options.services.uptime-page = {
     enable = lib.mkEnableOption "minimal text-only uptime status page";
 
     outputPath = lib.mkOption {
@@ -113,7 +113,7 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [{
       assertion = cfg.displayDays <= cfg.retentionDays;
-      message = "services.uptime.displayDays (${toString cfg.displayDays}) must be <= retentionDays (${toString cfg.retentionDays}).";
+      message = "services.uptime-page.displayDays (${toString cfg.displayDays}) must be <= retentionDays (${toString cfg.retentionDays}).";
     }];
 
     users.users.uptime = {

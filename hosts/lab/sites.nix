@@ -1,10 +1,7 @@
 # Options are documented in modules/site.nix. Each site gets a CD webhook at
 # http://localhost:4323/hooks/<name>-rebuild (preview: <name>-preview-rebuild);
 # point a Forgejo push webhook at it.
-{ pkgs, nixpkgs-unstable, ... }:
-let
-  unstable = import nixpkgs-unstable { system = pkgs.stdenv.hostPlatform.system; };
-in
+{ pkgs, ... }:
 {
   services.site.website = {
     enable = true;
@@ -16,9 +13,7 @@ in
     buildOutputDir = "public";
     installCommand = "";
     buildCommand = "zola build";
-    # 25.11 ships zola 0.21.0; the new [markdown.highlighting] section
-    # (light_theme/dark_theme/extra_themes) needs 0.22+. Pull from unstable.
-    extraBuildPackages = [ unstable.zola ];
+    extraBuildPackages = [ pkgs.zola ];
     caddyConfig = ''
       import favicons
 
