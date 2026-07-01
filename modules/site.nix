@@ -1,7 +1,6 @@
 { config, lib, pkgs, ... }:
 let
-  inherit (lib) mkOption types mkIf mkMerge mapAttrsToList mapAttrs' nameValuePair
-    concatLists optional;
+  inherit (lib) mkOption types mkIf mkMerge mapAttrsToList optional optionalAttrs;
 
   siteModule = types.submodule ({ name, ... }: {
     options = {
@@ -138,25 +137,43 @@ let
 
   webhookPort = 4323;
 
-  siteHelpers = name: site:
+  # Every enabled site is one "deployment" (a user, checkout, rebuild unit and
+  # optional serve unit); an enabled preview is a second one on another branch.
+  deployments =
+    (mapAttrsToList (name: site: {
+      inherit site;
+      id = name;
+      branch = site.branch;
+      dataDir = site.dataDir;
+      port = site.port;
+      rebuildDescription = "Clone/pull and build ${site.domain}";
+      serveDescription = site.domain;
+    }) cfg)
+    ++ (mapAttrsToList (name: site: {
+      inherit site;
+      id = "${name}-preview";
+      branch = site.preview.branch;
+      dataDir = "/srv/${name}-preview";
+      port = site.preview.port;
+      rebuildDescription = "Clone/pull and build preview of ${site.domain}";
+      serveDescription = "Preview of ${site.domain}";
+    }) previewCfg);
+
+  siteCommands = site:
     let
       pmBin =
         if site.packageManager == "pnpm"
         then "${pkgs.pnpm}/bin/pnpm"
         else "${pkgs.nodejs}/bin/npm";
-      defaultInstall =
-        if site.packageManager == "pnpm"
-        then "${pmBin} install --frozen-lockfile"
-        else "${pmBin} ci";
-      defaultBuild = "${pmBin} run build";
       installCmd =
-        if site.installCommand == null then defaultInstall
-        else site.installCommand;
+        if site.installCommand != null then site.installCommand
+        else if site.packageManager == "pnpm" then "${pmBin} install --frozen-lockfile"
+        else "${pmBin} ci";
       buildCmd =
-        if site.buildCommand == null then defaultBuild
-        else site.buildCommand;
+        if site.buildCommand != null then site.buildCommand
+        else "${pmBin} run build";
     in
-    { inherit pmBin installCmd buildCmd; dataDir = site.dataDir; };
+    { inherit installCmd buildCmd; };
 in
 {
   options.services.site = mkOption {
@@ -166,10 +183,13 @@ in
   };
 
   config = {
-    assertions = mapAttrsToList (name: site: {
+    assertions = (mapAttrsToList (name: site: {
+      assertion = site.static || site.port != null;
+      message = "services.site.${name}.port is required when static = false";
+    }) cfg) ++ (mapAttrsToList (name: site: {
       assertion = site.static || site.preview.port != null;
       message = "services.site.${name}.preview.port is required when static = false and preview is enabled";
-    }) previewCfg;
+    }) previewCfg);
 
     services.caddy.virtualHosts = mkMerge ((mapAttrsToList (name: site:
       {
@@ -224,10 +244,10 @@ in
       }
     ) previewCfg));
 
-    systemd.services = mkMerge ((mapAttrsToList (name: site:
-      let h = siteHelpers name site; in {
-        "${name}-rebuild" = {
-          description = "Clone/pull and build ${site.domain}";
+    systemd.services = mkMerge ((map ({ site, id, branch, dataDir, port, rebuildDescription, serveDescription }:
+      let c = siteCommands site; in {
+        "${id}-rebuild" = {
+          description = rebuildDescription;
           after = [ "network-online.target" ] ++ site.afterServices;
           path = [ pkgs.nodejs pkgs.bash ]
             ++ optional (site.packageManager == "pnpm") pkgs.pnpm
@@ -238,103 +258,46 @@ in
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = false;
-            ExecStartPre = "+${pkgs.writeShellScript "prepare-${name}" ''
-              mkdir -p ${h.dataDir}
-              chown -R ${name}:${name} ${h.dataDir}
+            ExecStartPre = "+${pkgs.writeShellScript "prepare-${id}" ''
+              mkdir -p ${dataDir}
+              chown -R ${id}:${id} ${dataDir}
             ''}";
-            ExecStart = pkgs.writeShellScript "rebuild-${name}" ''
+            ExecStart = pkgs.writeShellScript "rebuild-${id}" ''
               set -euo pipefail
-              if [ ! -d ${h.dataDir}/repo/.git ]; then
-                ${pkgs.git}/bin/git clone ${site.repo} ${h.dataDir}/repo
+              if [ ! -d ${dataDir}/repo/.git ]; then
+                ${pkgs.git}/bin/git clone ${site.repo} ${dataDir}/repo
               fi
-              cd ${h.dataDir}/repo
+              cd ${dataDir}/repo
               ${pkgs.git}/bin/git fetch origin
-              ${pkgs.git}/bin/git reset --hard origin/${site.branch}
-              ${lib.optionalString (h.installCmd != "") h.installCmd}
-              ${h.buildCmd}
+              ${pkgs.git}/bin/git reset --hard origin/${branch}
+              ${lib.optionalString (c.installCmd != "") c.installCmd}
+              ${c.buildCmd}
             '';
             ExecStartPost = lib.mkIf (!site.static)
-              "+/run/current-system/sw/bin/systemctl restart ${name}";
-            User = name;
-            Group = name;
+              "+/run/current-system/sw/bin/systemctl restart ${id}";
+            User = id;
+            Group = id;
           };
         };
-      } // lib.optionalAttrs (!site.static) {
-        ${name} = {
-          description = site.domain;
+      } // optionalAttrs (!site.static) {
+        ${id} = {
+          description = serveDescription;
           environment = {
             HOST = "127.0.0.1";
-            PORT = toString site.port;
+            PORT = toString port;
           } // site.environment;
           serviceConfig = {
             Type = "simple";
-            WorkingDirectory = "${h.dataDir}/repo";
+            WorkingDirectory = "${dataDir}/repo";
             ExecStart = "${pkgs.nodejs}/bin/node ${site.entryPoint}";
             Restart = "on-failure";
-            User = name;
-            Group = name;
+            User = id;
+            Group = id;
             ReadWritePaths = site.readWritePaths;
           };
         };
       }
-    ) cfg) ++ (mapAttrsToList (name: site:
-      let
-        h = siteHelpers name site;
-        previewDataDir = "/srv/${name}-preview";
-        previewUser = "${name}-preview";
-      in {
-        "${name}-preview-rebuild" = {
-          description = "Clone/pull and build preview of ${site.domain}";
-          after = [ "network-online.target" ] ++ site.afterServices;
-          path = [ pkgs.nodejs pkgs.bash ]
-            ++ optional (site.packageManager == "pnpm") pkgs.pnpm
-            ++ site.extraBuildPackages;
-          environment = site.buildEnvironment;
-          wants = [ "network-online.target" ];
-          wantedBy = [ "multi-user.target" ];
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = false;
-            ExecStartPre = "+${pkgs.writeShellScript "prepare-${name}-preview" ''
-              mkdir -p ${previewDataDir}
-              chown -R ${previewUser}:${previewUser} ${previewDataDir}
-            ''}";
-            ExecStart = pkgs.writeShellScript "rebuild-${name}-preview" ''
-              set -euo pipefail
-              if [ ! -d ${previewDataDir}/repo/.git ]; then
-                ${pkgs.git}/bin/git clone ${site.repo} ${previewDataDir}/repo
-              fi
-              cd ${previewDataDir}/repo
-              ${pkgs.git}/bin/git fetch origin
-              ${pkgs.git}/bin/git reset --hard origin/${site.preview.branch}
-              ${lib.optionalString (h.installCmd != "") h.installCmd}
-              ${h.buildCmd}
-            '';
-            ExecStartPost = lib.mkIf (!site.static)
-              "+/run/current-system/sw/bin/systemctl restart ${previewUser}";
-            User = previewUser;
-            Group = previewUser;
-          };
-        };
-      } // lib.optionalAttrs (!site.static) {
-        ${previewUser} = {
-          description = "Preview of ${site.domain}";
-          environment = {
-            HOST = "127.0.0.1";
-            PORT = toString site.preview.port;
-          } // site.environment;
-          serviceConfig = {
-            Type = "simple";
-            WorkingDirectory = "${previewDataDir}/repo";
-            ExecStart = "${pkgs.nodejs}/bin/node ${site.entryPoint}";
-            Restart = "on-failure";
-            User = previewUser;
-            Group = previewUser;
-            ReadWritePaths = site.readWritePaths;
-          };
-        };
-      }
-    ) previewCfg) ++ [{
+    ) deployments) ++ [{
       site-webhook = mkIf (cfg != {}) {
         description = "Webhook listener for site rebuilds";
         after = [ "network.target" ];
@@ -342,19 +305,13 @@ in
         serviceConfig = {
           Type = "simple";
           ExecStart = let
-            allHooks = (mapAttrsToList (name: site: {
-              id = "${name}-rebuild";
+            allHooks = map (d: {
+              id = "${d.id}-rebuild";
               execute-command = "/run/current-system/sw/bin/touch";
               pass-arguments-to-command = [
-                { source = "string"; name = "/run/site-rebuild/${name}"; }
+                { source = "string"; name = "/run/site-rebuild/${d.id}"; }
               ];
-            }) cfg) ++ (mapAttrsToList (name: site: {
-              id = "${name}-preview-rebuild";
-              execute-command = "/run/current-system/sw/bin/touch";
-              pass-arguments-to-command = [
-                { source = "string"; name = "/run/site-rebuild/${name}-preview"; }
-              ];
-            }) previewCfg);
+            }) deployments;
             hooksFile = pkgs.writeText "site-hooks.json" (builtins.toJSON allHooks);
           in "${pkgs.webhook}/bin/webhook -hooks ${hooksFile} -port ${toString webhookPort} -verbose";
           Restart = "always";
@@ -364,44 +321,27 @@ in
       };
     }]);
 
-    systemd.paths = mkMerge ((mapAttrsToList (name: site: {
-      "${name}-rebuild-trigger" = {
-        description = "Watch for ${name} rebuild trigger";
+    systemd.paths = mkMerge (map (d: {
+      "${d.id}-rebuild-trigger" = {
+        description = "Watch for ${d.id} rebuild trigger";
         wantedBy = [ "multi-user.target" ];
         pathConfig = {
-          PathModified = "/run/site-rebuild/${name}";
-          Unit = "${name}-rebuild.service";
+          PathModified = "/run/site-rebuild/${d.id}";
+          Unit = "${d.id}-rebuild.service";
         };
       };
-    }) cfg) ++ (mapAttrsToList (name: site: {
-      "${name}-preview-rebuild-trigger" = {
-        description = "Watch for ${name}-preview rebuild trigger";
-        wantedBy = [ "multi-user.target" ];
-        pathConfig = {
-          PathModified = "/run/site-rebuild/${name}-preview";
-          Unit = "${name}-preview-rebuild.service";
-        };
-      };
-    }) previewCfg));
+    }) deployments);
 
-    users.users = mkMerge ((mapAttrsToList (name: site: {
-      ${name} = {
+    users.users = mkMerge (map (d: {
+      ${d.id} = {
         isSystemUser = true;
-        group = name;
-        home = site.dataDir;
+        group = d.id;
+        home = d.dataDir;
       };
-    }) cfg) ++ (mapAttrsToList (name: site: {
-      "${name}-preview" = {
-        isSystemUser = true;
-        group = "${name}-preview";
-        home = "/srv/${name}-preview";
-      };
-    }) previewCfg));
+    }) deployments);
 
-    users.groups = mkMerge ((mapAttrsToList (name: _: {
-      ${name} = {};
-    }) cfg) ++ (mapAttrsToList (name: _: {
-      "${name}-preview" = {};
-    }) previewCfg));
+    users.groups = mkMerge (map (d: {
+      ${d.id} = {};
+    }) deployments);
   };
 }

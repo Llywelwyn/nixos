@@ -42,6 +42,4 @@
   systemd.tmpfiles.rules = [
     "d /srv/tinyauth/data 0750 podman podman -"
   ];
-
-  systemd.services.podman-tinyauth.serviceConfig.Delegate = true;
 }

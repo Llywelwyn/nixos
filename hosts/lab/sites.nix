@@ -1,38 +1,9 @@
-# services.site.<name> options:
-#
-#   enable              — whether this site is active (default: false)
-#   domain              — primary domain (required)
-#   repo                — git repository URL (required)
-#   static              — serve build output as static files, no Node server (default: false)
-#   port                — Node.js server port (required when static = false)
-#   buildOutputDir      — build output directory relative to repo root (default: "dist")
-#   redirectDomains     — domains that 301 to the primary domain (default: [])
-#   branch              — git branch to track (default: "main")
-#   packageManager      — "npm" or "pnpm" (default: "pnpm")
-#   installCommand      — override install command, "" skips, null derives from packageManager (default: null)
-#   buildCommand        — override build command, null derives from packageManager (default: null)
-#   extraBuildPackages  — extra packages on PATH during build, e.g. zola (default: [])
-#   caddyConfig         — override Caddy extraConfig for primary domain, null uses default (default: null)
-#   entryPoint          — Node.js entry point relative to repo root (default: "dist/server/entry.mjs")
-#   environment         — env vars for the running server (default: {})
-#   buildEnvironment    — env vars for building (default: {})
-#   dataDir             — base directory for repo and data (default: /srv/<name>)
-#   readWritePaths      — paths the server can write to at runtime (default: [])
-#   afterServices       — systemd units to wait for before building (default: ["forgejo.service"])
-#   preview.enable      — TinyAuth-protected preview of this site (default: false)
-#   preview.branch      — branch for preview (default: "develop")
-#   preview.domain      — preview domain (default: 0<name>.ily.rs)
-#   preview.port        — preview server port (required when static = false)
-#
-# remarks:
-#
-#   - a listener is active on http://localhost:4323/hooks/${name}-rebuild for CD
-#     Forgejo repo -> settings -> Webhooks -> Add webhook
-#   - preview webhook: http://localhost:4323/hooks/${name}-preview-rebuild
-
+# Options are documented in modules/site.nix. Each site gets a CD webhook at
+# http://localhost:4323/hooks/<name>-rebuild (preview: <name>-preview-rebuild);
+# point a Forgejo push webhook at it.
 { pkgs, nixpkgs-unstable, ... }:
 let
-  unstable = import nixpkgs-unstable { inherit (pkgs) system; };
+  unstable = import nixpkgs-unstable { system = pkgs.stdenv.hostPlatform.system; };
 in
 {
   services.site.website = {
@@ -107,7 +78,6 @@ in
     enable = true;
     domain = "x.ily.rs";
     repo = "https://git.ily.rs/lew/x";
-    branch = "main";
     static = true;
     buildOutputDir = ".";
     installCommand = "";

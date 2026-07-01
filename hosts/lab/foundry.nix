@@ -19,7 +19,4 @@
     ];
     ports = [ "127.0.0.1:30000:30000" ];
   };
-
-  # Workaround for NixOS/nixpkgs#410857 until backport of #475089 lands
-  systemd.services.podman-foundry.serviceConfig.Delegate = true;
 }

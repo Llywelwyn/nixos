@@ -72,11 +72,9 @@
     environmentFiles = [ config.sops.templates.shlink-env.path ];
   };
 
-  # Workaround for NixOS/nixpkgs#410857 until backport of #475089 lands
   systemd.services.podman-shlink = {
     after = [ "postgresql-setup.service" ];
     requires = [ "postgresql-setup.service" ];
-    serviceConfig.Delegate = true;
   };
 
   virtualisation.oci-containers.containers.shlink-web-client = {
@@ -87,7 +85,4 @@
       "${config.sops.templates.shlink-servers-json.path}:/usr/share/nginx/html/servers.json:ro"
     ];
   };
-
-  # Workaround for NixOS/nixpkgs#410857 until backport of #475089 lands
-  systemd.services.podman-shlink-web-client.serviceConfig.Delegate = true;
 }

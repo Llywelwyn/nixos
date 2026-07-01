@@ -27,13 +27,8 @@ let
     "guestbook"
     "rustypaste"
     "rustypaste-notify"
-    "podman-foundry"
-    "podman-dokuwiki"
-    "podman-shlink"
-    "podman-shlink-web-client"
-    "podman-tinyauth"
     "site-webhook"
-  ];
+  ] ++ map (n: "podman-${n}") (lib.attrNames config.virtualisation.oci-containers.containers);
 in
 {
   sops.secrets.telegram-alert-token = {

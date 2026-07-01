@@ -54,7 +54,4 @@ in
     group = "100999";
     mode = "0755";
   };
-
-  # Workaround for NixOS/nixpkgs#410857 until backport of #475089 lands
-  systemd.services.podman-dokuwiki.serviceConfig.Delegate = true;
 }

@@ -30,18 +30,13 @@ in
         START_SSH_SERVER = true;
         SSH_PORT = 4201;
         SSH_LISTEN_PORT = 4201;
-        DISABLE_HTTP_GIT = false;
       };
-      service = {
-        DISABLE_REGISTRATION = true;
-        REQUIRE_SIGNIN_VIEW = false;
-      };
+      service.DISABLE_REGISTRATION = true;
       webhook = {
         ALLOWED_HOST_LIST = "loopback";
       };
     };
   };
-
 
   networking.firewall.allowedTCPPorts = [ 4201 ];
 
