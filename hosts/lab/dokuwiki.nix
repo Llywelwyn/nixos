@@ -1,5 +1,15 @@
 { pkgs, ... }:
 let
+  goatcounterJs = pkgs.writeText "dokuwiki-userscript.js" ''
+    window.goatcounter = { path: function (p) { return location.host + p } };
+    (function () {
+      var s = document.createElement('script');
+      s.async = true;
+      s.dataset.goatcounter = 'https://stats.ily.rs/count';
+      s.src = 'https://stats.ily.rs/count.js';
+      document.head.appendChild(s);
+    })();
+  '';
   initOpenssh = pkgs.writeTextFile {
     name = "30-openssh";
     executable = true;
@@ -48,10 +58,18 @@ in
     ports = [ "127.0.0.1:8070:80" ];
   };
 
-  systemd.tmpfiles.settings."10-dokuwiki"."/srv/dokuwiki/cont-init.d/30-openssh"."C+" = {
-    argument = "${initOpenssh}";
-    user = "100999";
-    group = "100999";
-    mode = "0755";
+  systemd.tmpfiles.settings."10-dokuwiki" = {
+    "/srv/dokuwiki/cont-init.d/30-openssh"."C+" = {
+      argument = "${initOpenssh}";
+      user = "100999";
+      group = "100999";
+      mode = "0755";
+    };
+    "/srv/dokuwiki/config/dokuwiki/conf/userscript.js"."C+" = {
+      argument = "${goatcounterJs}";
+      user = "100999";
+      group = "100999";
+      mode = "0644";
+    };
   };
 }

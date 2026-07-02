@@ -1,7 +1,13 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 let
   cfg = config.services.forgejo;
   srv = cfg.settings.server;
+  goatcounterFooter = pkgs.writeText "forgejo-footer.tmpl" ''
+    <script>
+      window.goatcounter = { path: function (p) { return location.host + p } };
+    </script>
+    <script data-goatcounter="https://stats.ily.rs/count" async src="https://stats.ily.rs/count.js"></script>
+  '';
 in
 {
   sops.secrets.forgejo-admin-password = {
@@ -39,6 +45,20 @@ in
   };
 
   networking.firewall.allowedTCPPorts = [ 4201 ];
+
+  systemd.tmpfiles.settings."10-forgejo" = {
+    "${cfg.customDir}/templates/custom"."d" = {
+      user = "forgejo";
+      group = "forgejo";
+      mode = "0755";
+    };
+    "${cfg.customDir}/templates/custom/footer.tmpl"."C+" = {
+      argument = "${goatcounterFooter}";
+      user = "forgejo";
+      group = "forgejo";
+      mode = "0644";
+    };
+  };
 
   systemd.services.forgejo.preStart = let
     adminCmd = "${lib.getExe cfg.package} admin user";
