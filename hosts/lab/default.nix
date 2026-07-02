@@ -18,6 +18,7 @@ in
     ./guestbook.nix
     ./rustypaste.nix
     ./telegram-alerts.nix
+    ./goatcounter.nix
     ../../modules/uptime
   ];
 
@@ -45,6 +46,7 @@ in
           { name = "foundry";   url = "https://foundry.ily.rs"; }
           { name = "auth";      url = "https://auth.ily.rs"; }
           { name = "x";         url = "https://x.ily.rs"; }
+          { name = "stats";     url = "https://stats.ily.rs"; }
         ];
       }
       {
