@@ -47,6 +47,11 @@ in
   networking.firewall.allowedTCPPorts = [ 4201 ];
 
   systemd.tmpfiles.settings."10-forgejo" = {
+    "${cfg.customDir}/templates"."d" = {
+      user = "forgejo";
+      group = "forgejo";
+      mode = "0755";
+    };
     "${cfg.customDir}/templates/custom"."d" = {
       user = "forgejo";
       group = "forgejo";
