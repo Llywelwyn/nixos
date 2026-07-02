@@ -74,7 +74,7 @@ in
       if ${adminCmd} list | grep -qE '^[0-9]+\s+lew\s'; then
         echo "admin user 'lew' already exists, marking bootstrapped"
       else
-        ${adminCmd} create --admin --email "lew@ily.rs" \
+        ${adminCmd} create --admin --email "l@ily.rs" \
           --username lew --password "$(tr -d '\n' < ${pwd.path})"
       fi
       touch ${marker}

@@ -109,7 +109,7 @@ in
   '';
 
   services.caddy.enable = true;
-  services.caddy.email = "lew@ily.rs";
+  services.caddy.email = "l@ily.rs";
 
   system.stateVersion = "23.11";
 }
