@@ -39,6 +39,7 @@ let
     "guestbook"
     "rustypaste"
     "rustypaste-notify"
+    "rustypaste-bot"
     "site-webhook"
   ] ++ map (n: "podman-${n}") (lib.attrNames config.virtualisation.oci-containers.containers);
 in

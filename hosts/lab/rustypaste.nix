@@ -58,43 +58,135 @@ let
 
   notifyScript = pkgs.writeShellScript "rustypaste-notify" ''
     set -u
-    token=$(tr -d '\n' < ${config.sops.secrets.telegram-alert-token.path})
+    token=$(tr -d '\n' < ${config.sops.secrets.rustypaste-telegram-token.path})
+
+    send() { # $1: text, $2: "preview" to keep the link preview
+      preview=true
+      [ "''${2:-}" = "preview" ] && preview=false
+      ${pkgs.curl}/bin/curl -fsS --max-time 10 \
+        -X POST "https://api.telegram.org/bot$token/sendMessage" \
+        --data-urlencode "chat_id=${chatId}" \
+        --data-urlencode "text=$1" \
+        --data-urlencode "disable_web_page_preview=$preview" >/dev/null || true
+    }
+
     ${pkgs.inotify-tools}/bin/inotifywait -m -q -r \
       -e close_write -e moved_to \
       --format '%w%f' /srv/rustypaste/upload \
     | while read -r path; do
         f=$(basename "$path")
-        [ -z "$f" ] && continue
-        name=$(printf '%s' "$f" | sed -E 's/\.[0-9]+$//')
+        [ -z "$f" ] || [ ! -f "$path" ] && continue
+        name=$f
         extra=""
-        case "$path" in
-          */oneshot/*) extra=" [one-shot]" ;;
-          */url/*)     extra=" [url]" ;;
-        esac
         suffix=''${f##*.}
         case "$suffix" in
           *[!0-9]*|"") ;;
           *)
             if [ "$suffix" != "$f" ] && [ ''${#suffix} -ge 10 ]; then
+              name=''${f%.*}
               ts=$suffix
               [ ''${#suffix} -ge 13 ] && ts=$((suffix / 1000))
               expiry=$(date -u -d "@$ts" '+%Y-%m-%d %H:%M UTC' 2>/dev/null || true)
-              [ -n "$expiry" ] && extra="$extra [expires $expiry]"
+              [ -n "$expiry" ] && extra=" [expires $expiry]"
             fi
             ;;
         esac
-        ${pkgs.curl}/bin/curl -fsS --max-time 10 \
-          -X POST "https://api.telegram.org/bot$token/sendMessage" \
-          --data-urlencode "chat_id=${chatId}" \
-          --data-urlencode "text=📎 New upload on file.ily.rs: https://file.ily.rs/$name$extra" \
-          --data-urlencode "disable_web_page_preview=true" >/dev/null || true
+        url="https://file.ily.rs/$name"
+        case "$path" in
+          */oneshot_url/*|*/url/*)
+            case "$path" in */oneshot_url/*) extra=" [one-shot]$extra" ;; esac
+            target=$(head -c 500 "$path" 2>/dev/null | tr -d '\n')
+            send "🔗 New short URL on file.ily.rs: $url$extra
+    → $target"
+            ;;
+          *)
+            case "$path" in */oneshot/*) extra=" [one-shot]$extra" ;; esac
+            mime=$(${pkgs.file}/bin/file --brief --mime-type "$path" 2>/dev/null || echo unknown)
+            bytes=$(stat -c %s "$path" 2>/dev/null || echo 0)
+            size=$(${pkgs.coreutils}/bin/numfmt --to=iec --suffix=B "$bytes" 2>/dev/null || echo "$bytes")
+            case "$mime" in
+              text/*)
+                snippet=$(head -c 1000 "$path" 2>/dev/null)
+                [ "$bytes" -gt 1000 ] && snippet="$snippet
+    […]"
+                send "📎 New paste on file.ily.rs: $url$extra ($size)
+
+    $snippet"
+                ;;
+              image/*)
+                send "🖼 New upload on file.ily.rs: $url$extra ($mime, $size)" preview
+                ;;
+              *)
+                send "📎 New upload on file.ily.rs: $url$extra ($mime, $size)"
+                ;;
+            esac
+            ;;
+        esac
       done
+  '';
+
+  botScript = pkgs.writeShellScript "rustypaste-bot" ''
+    set -u
+    token=$(tr -d '\n' < ${config.sops.secrets.rustypaste-telegram-token.path})
+    dtoken=$(tr -d '\n' < ${config.sops.secrets.rustypaste-delete-token.path})
+    api="https://api.telegram.org/bot$token"
+    offset_file="/srv/rustypaste/.bot-offset"
+    offset=$(cat "$offset_file" 2>/dev/null || echo 0)
+
+    reply() { # $1: message_id to reply to, $2: text
+      ${pkgs.curl}/bin/curl -fsS --max-time 10 \
+        -X POST "$api/sendMessage" \
+        --data-urlencode "chat_id=${chatId}" \
+        --data-urlencode "reply_to_message_id=$1" \
+        --data-urlencode "text=$2" \
+        --data-urlencode "disable_web_page_preview=true" >/dev/null || true
+    }
+
+    while :; do
+      updates=$(${pkgs.curl}/bin/curl -fsS --max-time 60 "$api/getUpdates" \
+        --data-urlencode "timeout=50" \
+        --data-urlencode "offset=$offset" \
+        --data-urlencode 'allowed_updates=["message"]') || { sleep 5; continue; }
+      while IFS= read -r u; do
+        [ -z "$u" ] && continue
+        uid=$(${pkgs.jq}/bin/jq -r '.update_id' <<<"$u")
+        offset=$((uid + 1))
+        printf '%s\n' "$offset" > "$offset_file"
+        chat=$(${pkgs.jq}/bin/jq -r '.message.chat.id // empty' <<<"$u")
+        [ "$chat" = "${chatId}" ] || continue
+        cmd=$(${pkgs.jq}/bin/jq -r '.message.text // empty' <<<"$u" \
+          | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+        case "$cmd" in delete|/delete|/delete@*) ;; *) continue ;; esac
+        msgid=$(${pkgs.jq}/bin/jq -r '.message.message_id' <<<"$u")
+        orig=$(${pkgs.jq}/bin/jq -r '.message.reply_to_message.text // empty' <<<"$u")
+        name=$(grep -oE 'https://file\.ily\.rs/[A-Za-z0-9._-]+' <<<"$orig" \
+          | head -1 | sed 's|.*/||')
+        if [ -z "$name" ]; then
+          reply "$msgid" "Reply \"delete\" to an upload notification to remove that file."
+          continue
+        fi
+        code=$(${pkgs.curl}/bin/curl -sS -o /dev/null -w '%{http_code}' --max-time 10 \
+          -X DELETE -H "Authorization: $dtoken" "http://localhost:${toString port}/$name")
+        if [ "$code" = "200" ]; then
+          reply "$msgid" "🗑 Deleted $name."
+        else
+          reply "$msgid" "Could not delete $name (HTTP $code)."
+        fi
+      done < <(${pkgs.jq}/bin/jq -c '.result[]?' <<<"$updates" 2>/dev/null)
+    done
   '';
 in
 {
   sops.secrets.rustypaste-delete-token = {
     sopsFile = ../../secrets/rustypaste.yaml;
     key = "delete_token";
+    owner = "rustypaste";
+    mode = "0400";
+  };
+
+  sops.secrets.rustypaste-telegram-token = {
+    sopsFile = ../../secrets/rustypaste.yaml;
+    key = "telegram_bot_token";
     owner = "rustypaste";
     mode = "0400";
   };
@@ -112,6 +204,7 @@ in
     "d /srv/rustypaste/upload 0750 rustypaste rustypaste -"
     "d /srv/rustypaste/upload/oneshot 0750 rustypaste rustypaste -"
     "d /srv/rustypaste/upload/url 0750 rustypaste rustypaste -"
+    "d /srv/rustypaste/upload/oneshot_url 0750 rustypaste rustypaste -"
   ];
 
   systemd.services.rustypaste = {
@@ -144,9 +237,35 @@ in
     after = [ "rustypaste.service" ];
     serviceConfig = {
       Type = "simple";
+      User = "rustypaste";
+      Group = "rustypaste";
       ExecStart = notifyScript;
       Restart = "on-failure";
       RestartSec = 5;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+    };
+  };
+
+  systemd.services.rustypaste-bot = {
+    description = "Telegram reply-to-delete bot for rustypaste";
+    wantedBy = [ "multi-user.target" ];
+    requires = [ "rustypaste.service" ];
+    after = [ "rustypaste.service" "network-online.target" ];
+    serviceConfig = {
+      Type = "simple";
+      User = "rustypaste";
+      Group = "rustypaste";
+      ExecStart = botScript;
+      Restart = "on-failure";
+      RestartSec = 5;
+      ReadWritePaths = [ "/srv/rustypaste" ];
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      PrivateTmp = true;
+      NoNewPrivileges = true;
     };
   };
 
