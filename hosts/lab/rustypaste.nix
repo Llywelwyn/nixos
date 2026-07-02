@@ -13,7 +13,7 @@ let
       upload_path = "/srv/rustypaste/upload";
       timeout = "30s";
       expose_version = false;
-      expose_list = true;
+      expose_list = false;
       handle_spaces = "replace";
     };
 
@@ -32,7 +32,7 @@ let
     };
 
     paste = {
-      random_url = { type = "alphanumeric"; length = 3; };
+      random_url = { type = "alphanumeric"; length = 6; };
       default_extension = "txt";
       mime_override = [
         { mime = "image/jpeg"; regex = "^.*\\.jpg$"; }
@@ -49,8 +49,6 @@ let
         "application/java-archive"
         "application/java-vm"
       ];
-      # Uploads are permanent by default; this only reaps files that were
-      # uploaded with an explicit expiry.
       duplicate_files = false;
       delete_expired_files = { enabled = true; interval = "1h"; };
     };
@@ -61,18 +59,34 @@ let
   notifyScript = pkgs.writeShellScript "rustypaste-notify" ''
     set -u
     token=$(tr -d '\n' < ${config.sops.secrets.telegram-alert-token.path})
-    ${pkgs.inotify-tools}/bin/inotifywait -m -q \
+    ${pkgs.inotify-tools}/bin/inotifywait -m -q -r \
       -e close_write -e moved_to \
-      --format '%f' /srv/rustypaste/upload \
-    | while read -r f; do
+      --format '%w%f' /srv/rustypaste/upload \
+    | while read -r path; do
+        f=$(basename "$path")
         [ -z "$f" ] && continue
-        # On-disk name carries an expiry suffix (.<unixtime>); the served
-        # path is the base name, so strip it for the link.
         name=$(printf '%s' "$f" | sed -E 's/\.[0-9]+$//')
+        extra=""
+        case "$path" in
+          */oneshot/*) extra=" [one-shot]" ;;
+          */url/*)     extra=" [url]" ;;
+        esac
+        suffix=''${f##*.}
+        case "$suffix" in
+          *[!0-9]*|"") ;;
+          *)
+            if [ "$suffix" != "$f" ] && [ ''${#suffix} -ge 10 ]; then
+              ts=$suffix
+              [ ''${#suffix} -ge 13 ] && ts=$((suffix / 1000))
+              expiry=$(date -u -d "@$ts" '+%Y-%m-%d %H:%M UTC' 2>/dev/null || true)
+              [ -n "$expiry" ] && extra="$extra [expires $expiry]"
+            fi
+            ;;
+        esac
         ${pkgs.curl}/bin/curl -fsS --max-time 10 \
           -X POST "https://api.telegram.org/bot$token/sendMessage" \
           --data-urlencode "chat_id=${chatId}" \
-          --data-urlencode "text=📎 New upload on file.ily.rs: https://file.ily.rs/$name" \
+          --data-urlencode "text=📎 New upload on file.ily.rs: https://file.ily.rs/$name$extra" \
           --data-urlencode "disable_web_page_preview=true" >/dev/null || true
       done
   '';
@@ -96,6 +110,8 @@ in
   systemd.tmpfiles.rules = [
     "d /srv/rustypaste 0750 rustypaste rustypaste -"
     "d /srv/rustypaste/upload 0750 rustypaste rustypaste -"
+    "d /srv/rustypaste/upload/oneshot 0750 rustypaste rustypaste -"
+    "d /srv/rustypaste/upload/url 0750 rustypaste rustypaste -"
   ];
 
   systemd.services.rustypaste = {
@@ -121,7 +137,6 @@ in
     };
   };
 
-  # Per-upload Telegram notification (rustypaste has no built-in webhook).
   systemd.services.rustypaste-notify = {
     description = "Telegram notification on rustypaste upload";
     wantedBy = [ "multi-user.target" ];
@@ -146,7 +161,6 @@ in
         respond 200
       }
 
-      # upload page at the root
       @page {
         method GET
         path /
@@ -155,7 +169,6 @@ in
         file_server
       }
 
-      # static assets (joi.png, etc.) if they exist on disk
       @asset {
         method GET
         file
@@ -164,8 +177,8 @@ in
         file_server
       }
 
-      # everything else (uploads, downloads, /list) -> rustypaste
       handle {
+        header Content-Security-Policy "sandbox allow-same-origin"
         reverse_proxy localhost:${toString port}
       }
     '';

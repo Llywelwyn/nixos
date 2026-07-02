@@ -20,6 +20,19 @@ let
       --data-urlencode "disable_web_page_preview=true" >/dev/null
   '';
 
+  diskAlertScript = pkgs.writeShellScript "disk-usage-alert" ''
+    set -u
+    threshold=85
+    usage=$(${pkgs.coreutils}/bin/df --output=pcent /srv | tail -n 1 | tr -dc '0-9')
+    [ "$usage" -lt "$threshold" ] && exit 0
+    token=$(tr -d '\n' < ${config.sops.secrets.telegram-alert-token.path})
+    ${pkgs.curl}/bin/curl -fsS --max-time 10 \
+      -X POST "https://api.telegram.org/bot$token/sendMessage" \
+      --data-urlencode "chat_id=${chatId}" \
+      --data-urlencode "text=[${host}] disk usage for /srv at $usage% (threshold $threshold%)" \
+      --data-urlencode "disable_web_page_preview=true" >/dev/null
+  '';
+
   alertedServices = [
     "forgejo"
     "caddy"
@@ -45,9 +58,24 @@ in
           ExecStart = "${alertScript} %i";
         };
       };
+      disk-usage-alert = {
+        description = "Telegram alert when disk usage crosses threshold";
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = diskAlertScript;
+        };
+      };
     }
     (lib.genAttrs alertedServices (_: {
       unitConfig.OnFailure = [ "telegram-alert@%n.service" ];
     }))
   ];
+
+  systemd.timers.disk-usage-alert = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "daily";
+      Persistent = true;
+    };
+  };
 }
