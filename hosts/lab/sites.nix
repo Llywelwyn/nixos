@@ -25,6 +25,8 @@
         redir * /now permanent
       }
 
+      redir /p /blog/penfield/ permanent
+
       @guestbook path /guestbook /guestbook/*
       handle @guestbook {
         reverse_proxy localhost:8123
