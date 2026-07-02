@@ -32,7 +32,7 @@ let
     };
 
     paste = {
-      random_url = { type = "alphanumeric"; length = 6; };
+      random_url = { type = "alphanumeric"; length = 4; };
       default_extension = "txt";
       mime_override = [
         { mime = "image/jpeg"; regex = "^.*\\.jpg$"; }
