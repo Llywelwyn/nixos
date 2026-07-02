@@ -84,7 +84,8 @@
     }
     xhr.upload.onprogress=e=>{ if(e.lengthComputable) setProgress(e.loaded/e.total); };
     xhr.onload=()=>{ (xhr.status>=200&&xhr.status<300)
-      ? done(xhr.responseText.trim()) : fail('server returned '+xhr.status); };
+      ? done(xhr.responseText.trim())
+      : fail(xhr.status===409 ? 'that name is already taken (409)' : 'server returned '+xhr.status); };
     xhr.onerror=()=>fail('upload failed (network error)');
     xhr.send(fd);
   }
