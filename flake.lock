@@ -40,11 +40,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1783086437,
-        "narHash": "sha256-PugUf1NsG/ASf7RmTwI4knI80Q/dYeBsNctC+fHIoKU=",
+        "lastModified": 1783087729,
+        "narHash": "sha256-PnJyz6Uu91SUPc6FN51xsY5WLoYlaQdL1crfXU/Tqyw=",
         "ref": "refs/heads/main",
-        "rev": "31a588d8828911472b67b33fa9903e5e4361744e",
-        "revCount": 115,
+        "rev": "08c01f46b951495047b8ed453fe94596b048c7b1",
+        "revCount": 116,
         "type": "git",
         "url": "https://git.ily.rs/lew/guestbook"
       },
