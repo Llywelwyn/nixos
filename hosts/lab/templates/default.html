@@ -149,13 +149,18 @@
       margin-top: 0;
     }
 
-    .entry-date {
-      display: none;
+    .entry-header {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      /* the date span ends in an em-space; top it up to a 2rem gutter */
+      column-gap: calc(2rem - 1em);
+      align-items: baseline;
     }
 
-    .entry-header::after {
-      content: " on " attr(title);
+    .entry-date {
       color: var(--muted);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
     .entry-body {
