@@ -15,6 +15,7 @@
 
     siteTitle = "ily guestbook";
     basePath = "/guestbook";
+    dateFormat = "%d/%m/%y";
 
     submissions.enable = true;
     websites.enable = true;
