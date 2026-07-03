@@ -5,6 +5,7 @@
 <meta content="width=device-width,initial-scale=1" name="viewport">
 <title>file.ily.rs</title>
 <link href="https://ily.rs/style.css" rel="stylesheet">
+<link href="https://cdn.ily.rs/mascot.css" rel="stylesheet">
 <style>
   input[type=file] { display: none; }
 
@@ -21,10 +22,6 @@
   .curl { text-align: left; }
   #pbox { outline: none; caret-color: transparent; }
 
-  .mascot { position: fixed; right: 2rem; bottom: 0; width: 280px; user-select: none; }
-  .mascot img { width: 100%; -webkit-user-drag: none; user-drag: none; }
-
-  @media (max-width: 700px) { .mascot { display: none; } }
 </style>
 </head>
 <body>
@@ -57,8 +54,6 @@
 
   <p><span class="result" id="result"><a id="link" href="#" target="_blank" rel="noopener"></a> &mdash; <a href="#" id="copy">copy</a></span></p>
   <p class="err" id="err"></p>
-
-  <div class="mascot" id="mascot"><img id="joi" src="https://ily.rs/joi.png" alt="" draggable="false"></div>
 
 <script>
   const $ = id => document.getElementById(id);

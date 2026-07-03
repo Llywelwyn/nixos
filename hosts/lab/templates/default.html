@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}}</title>
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://cdn.ily.rs/mascot.css">
   <style>
     .guestbook-summary {
       list-style: none;
@@ -169,25 +170,6 @@
       cursor: pointer;
     }
 
-    .mascot {
-      position: fixed;
-      right: calc(2rem - (100vw - 100%));
-      bottom: 0;
-      width: 280px;
-      user-select: none;
-    }
-
-    .mascot img {
-      width: 100%;
-      -webkit-user-drag: none;
-      user-drag: none;
-    }
-
-    @media (max-width: 700px) {
-      .mascot {
-        display: none;
-      }
-    }
   </style>
 </head>
 <body>
@@ -203,7 +185,6 @@
     {{form}}
   </details>
   {{entries}}
-  <div class="mascot"><img src="/joi.png" alt="" draggable="false"></div>
   <script>
     (function () {
       document.querySelectorAll('.entry-drawing').forEach(function (img) {

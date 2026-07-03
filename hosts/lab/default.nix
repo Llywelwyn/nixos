@@ -13,6 +13,7 @@ in
     ../../modules/favicons.nix
     ../../modules/site.nix
     ./sites.nix
+    ./cdn.nix
     ./fail2ban.nix
     ./tinyauth.nix
     ./guestbook.nix
