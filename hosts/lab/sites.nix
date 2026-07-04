@@ -51,6 +51,37 @@
     '';
   };
 
+  services.site.website-lite = {
+    enable = true;
+    domain = "lite.ily.rs";
+    repo = "https://git.ily.rs/lew/website";
+    branch = "master";
+    static = true;
+    buildOutputDir = "public";
+    installCommand = "";
+    buildCommand = "zola --config config-lite.toml build && find public \\( -name '*.png' -o -name '*.gif' -o -name '*.jpg' -o -name '*.webp' \\) -delete";
+    extraBuildPackages = [ pkgs.zola ];
+    caddyConfig = ''
+      root * /srv/website-lite/repo/public
+      encode zstd gzip
+
+      @guestbook path /guestbook /guestbook/*
+      handle @guestbook {
+        reverse_proxy localhost:8123
+      }
+
+      handle {
+        try_files {path} {path}/index.html
+        file_server
+      }
+
+      handle_errors 404 {
+        rewrite * /404.html
+        file_server
+      }
+    '';
+  };
+
   services.site.penfield = {
     enable = true;
     domain = "penfield.ily.rs";
