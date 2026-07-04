@@ -57,6 +57,12 @@ in
     ''path:re:^/file\.ily\.rs/(health-ping$|favicon|apple-touch-icon|robots\.txt)''
   ];
 
+  systemd.services.goatcounter-import-website = mkImport "ily.rs" [
+    "user_agent:curl"
+    ''path:re:^/ily\.rs/(favicon|apple-touch-icon|robots\.txt)''
+    ''path:re:\.(css|xml|png|jpe?g|gif|webp|ico|webm|ogg|mp3)$''
+  ];
+
   systemd.services.goatcounter-import-penfield = mkImport "penfield.ily.rs" [
     "user_agent:curl"
     ''path:re:^/penfield\.ily\.rs/(favicon|apple-touch-icon|robots\.txt)''
