@@ -57,9 +57,9 @@ in
     ''path:re:^/file\.ily\.rs/(health-ping$|favicon|apple-touch-icon|robots\.txt)''
   ];
 
-  systemd.services.goatcounter-import-website = mkImport "ily.rs" [
+  systemd.services.goatcounter-import-lite = mkImport "lite.ily.rs" [
     "user_agent:curl"
-    ''path:re:^/ily\.rs/(favicon|apple-touch-icon|robots\.txt)''
+    ''path:re:^/lite\.ily\.rs/(favicon|apple-touch-icon|robots\.txt)''
     ''path:re:\.(css|xml|png|jpe?g|gif|webp|ico|webm|ogg|mp3)$''
   ];
 

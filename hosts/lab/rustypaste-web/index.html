@@ -5,6 +5,7 @@
 <meta content="width=device-width,initial-scale=1" name="viewport">
 <title>file.ily.rs</title>
 <link href="https://ily.rs/style.css" rel="stylesheet">
+<link href="https://cdn.ily.rs/mascot.css" rel="stylesheet">
 <style>
   input[type=file] { display: none; }
 
@@ -121,5 +122,9 @@
     copy.textContent='copied'; setTimeout(()=>copy.textContent='copy',1400);
   }catch{ fail('clipboard blocked'); } });
 </script>
+<script>
+  window.goatcounter = { path: function (p) { return location.host + p } };
+</script>
+<script data-goatcounter="https://stats.ily.rs/count" async src="https://stats.ily.rs/count.js"></script>
 </body>
 </html>

@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}}</title>
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://cdn.ily.rs/mascot.css">
+  <link rel="icon" href="/favicon.png">
   <style>
     .guestbook-summary {
       list-style: none;
@@ -203,5 +205,9 @@
       });
     })();
   </script>
+  <script>
+    window.goatcounter = { path: function (p) { return location.host + p } };
+  </script>
+  <script data-goatcounter="https://stats.ily.rs/count" async src="https://stats.ily.rs/count.js"></script>
 </body>
 </html>
