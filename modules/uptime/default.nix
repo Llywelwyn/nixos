@@ -2,15 +2,21 @@
 let
   cfg = config.services.uptime-page;
 
-  serviceSubmodule = lib.types.submodule {
+  probeSubmodule = lib.types.submodule {
     options = {
-      name = lib.mkOption {
-        type = lib.types.str;
-        description = "Service name. Used as the log filename and the row label.";
-      };
       url = lib.mkOption {
         type = lib.types.str;
         description = "URL to probe.";
+      };
+      category = lib.mkOption {
+        type = lib.types.str;
+        default = "services";
+        description = "Category this probe is rendered under.";
+      };
+      order = lib.mkOption {
+        type = lib.types.int;
+        default = 100;
+        description = "Sort key within the category (ties break on name).";
       };
     };
   };
@@ -32,28 +38,36 @@ let
         default = false;
         description = "If true, omit the URL column when rendering services in this category.";
       };
-      services = lib.mkOption {
-        type = lib.types.listOf serviceSubmodule;
-        default = [];
-        example = [{ name = "git"; url = "https://git.ily.rs"; }];
-        description = "Ordered list of services to probe. Render order matches list order.";
+      order = lib.mkOption {
+        type = lib.types.int;
+        default = 100;
+        description = "Sort key for category render order (ties break on name).";
       };
     };
   };
 
+  byOrder = a: b:
+    if a.value.order != b.value.order
+    then a.value.order < b.value.order
+    else a.name < b.name;
+
+  sortedCategories = lib.sort byOrder (lib.attrsToList cfg.categories);
+  probesFor = catName: lib.sort byOrder
+    (lib.filter (p: p.value.category == catName) (lib.attrsToList cfg.probes));
+
   configFile = pkgs.writeText "uptime-config" ((lib.concatStringsSep "\n" (
     (lib.imap0 (i: cat:
-      "CAT\t${toString i}\t${toString cat.intervalSeconds}\t${if cat.hideUrls then "1" else "0"}\t${cat.description}"
-    ) cfg.categories)
+      "CAT\t${toString i}\t${toString cat.value.intervalSeconds}\t${if cat.value.hideUrls then "1" else "0"}\t${cat.value.description}"
+    ) sortedCategories)
     ++
     (lib.concatLists (lib.imap0 (i: cat:
-      map (svc: "SVC\t${toString i}\t${svc.name}\t${svc.url}") cat.services
-    ) cfg.categories))
+      map (p: "SVC\t${toString i}\t${p.name}\t${p.value.url}") (probesFor cat.name)
+    ) sortedCategories))
   )) + "\n");
 
   introFile = pkgs.writeText "uptime-intro" cfg.intro;
 
-  catIntervals = map (c: c.intervalSeconds) cfg.categories;
+  catIntervals = map (c: c.intervalSeconds) (lib.attrValues cfg.categories);
   timerSeconds =
     if catIntervals == []
     then 60
@@ -86,9 +100,16 @@ in
     };
 
     categories = lib.mkOption {
-      type = lib.types.listOf categorySubmodule;
-      default = [];
-      description = "Ordered list of service categories. Each is rendered as its own table.";
+      type = lib.types.attrsOf categorySubmodule;
+      default = {};
+      description = "Service categories, rendered as separate tables sorted by order.";
+    };
+
+    probes = lib.mkOption {
+      type = lib.types.attrsOf probeSubmodule;
+      default = {};
+      example = { git = { url = "https://git.ily.rs"; order = 40; }; };
+      description = "Services to probe, keyed by row label (also the log filename). Merged from all modules.";
     };
 
     retentionDays = lib.mkOption {
@@ -114,7 +135,10 @@ in
     assertions = [{
       assertion = cfg.displayDays <= cfg.retentionDays;
       message = "services.uptime-page.displayDays (${toString cfg.displayDays}) must be <= retentionDays (${toString cfg.retentionDays}).";
-    }];
+    }] ++ lib.mapAttrsToList (name: probe: {
+      assertion = cfg.categories ? ${probe.category};
+      message = "services.uptime-page.probes.${name} references undefined category \"${probe.category}\".";
+    }) cfg.probes;
 
     users.users.uptime = {
       isSystemUser = true;

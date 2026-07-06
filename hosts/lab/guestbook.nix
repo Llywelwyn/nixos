@@ -1,5 +1,8 @@
-{ config, guestbook, ... }:
+{ config, inputs, pkgs, ... }:
 {
+  services.telegram-alerts.units = [ "guestbook" ];
+  services.uptime-page.probes.guestbook = { url = "https://ily.rs/guestbook"; order = 20; };
+
   sops.secrets.telegram_bot_token = {
     sopsFile = ../../secrets/guestbook.yaml;
     owner = "guestbook";
@@ -7,7 +10,7 @@
 
   services.guestbook = {
     enable = true;
-    package = guestbook.packages.aarch64-linux.default;
+    package = inputs.guestbook.packages.${pkgs.stdenv.hostPlatform.system}.default;
     port = 8123;
     dataDir = "/srv/guestbook/data";
     user = "guestbook";

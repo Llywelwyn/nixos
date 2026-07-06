@@ -4,13 +4,22 @@ default:
 
 [doc("Build and activate the new configuration immediately")]
 deploy:
-    sudo nixos-rebuild switch --flake /etc/nixos#lab
+    sudo nixos-rebuild switch --flake .#lab
 
-[doc("Build the configuration without activating it")]
+[doc("Validate the flake and all host configs without building")]
 check:
-    sudo nixos-rebuild dry-build --flake /etc/nixos#lab
+    nix flake check
 
 [doc("Pull latest from Forgejo, then build and activate")]
 update:
     git pull
-    sudo nixos-rebuild switch --flake /etc/nixos#lab
+    sudo nixos-rebuild switch --flake .#lab
+
+[doc("Deploy to the lab from another machine (builds on the lab)")]
+deploy-remote:
+    nix run nixpkgs#nixos-rebuild -- switch --flake .#lab --target-host lab --build-host lab --use-remote-sudo
+
+[doc("Lint nix files with statix and deadnix")]
+lint:
+    nix run nixpkgs#statix -- check .
+    nix run nixpkgs#deadnix -- .

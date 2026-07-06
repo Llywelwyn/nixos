@@ -177,6 +177,9 @@ let
   '';
 in
 {
+  services.telegram-alerts.units = [ "rustypaste" "rustypaste-notify" "rustypaste-bot" ];
+  services.uptime-page.probes.file = { url = "https://file.ily.rs/health-ping"; order = 30; };
+
   sops.secrets.rustypaste-delete-token = {
     sopsFile = ../../secrets/rustypaste.yaml;
     key = "delete_token";
@@ -253,6 +256,7 @@ in
     description = "Telegram reply-to-delete bot for rustypaste";
     wantedBy = [ "multi-user.target" ];
     requires = [ "rustypaste.service" ];
+    wants = [ "network-online.target" ];
     after = [ "rustypaste.service" "network-online.target" ];
     serviceConfig = {
       Type = "simple";

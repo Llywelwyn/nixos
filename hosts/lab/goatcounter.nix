@@ -39,6 +39,8 @@ in
     proxy = true;
   };
 
+  services.uptime-page.probes.stats = { url = "https://stats.ily.rs"; order = 110; };
+
   services.caddy.virtualHosts."stats.ily.rs" = {
     extraConfig = ''
       import favicons

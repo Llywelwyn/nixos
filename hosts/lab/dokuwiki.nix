@@ -26,6 +26,8 @@ let
   };
 in
 {
+  services.uptime-page.probes.wiki = { url = "https://wiki.ily.rs/health-ping"; order = 70; };
+
   services.caddy.virtualHosts."wiki.ily.rs" = {
     extraConfig = ''
       import favicons

@@ -1,8 +1,19 @@
 # Options are documented in modules/site.nix. Each site gets a CD webhook at
 # http://localhost:4323/hooks/<name>-rebuild (preview: <name>-preview-rebuild);
 # point a Forgejo push webhook at it.
-{ pkgs, ... }:
+{ config, pkgs, ... }:
+let
+  guestbookPort = toString config.services.guestbook.port;
+in
 {
+  services.telegram-alerts.units = [ "site-webhook" ];
+  services.uptime-page.probes = {
+    website  = { url = "https://ily.rs"; order = 10; };
+    records  = { url = "https://c.ily.rs"; order = 50; };
+    penfield = { url = "https://penfield.ily.rs"; order = 60; };
+    x        = { url = "https://x.ily.rs"; order = 100; };
+  };
+
   services.site.website = {
     enable = true;
     domain = "ily.rs";
@@ -29,7 +40,7 @@
 
       @guestbook path /guestbook /guestbook/*
       handle @guestbook {
-        reverse_proxy localhost:8123
+        reverse_proxy localhost:${guestbookPort}
       }
 
       @status path /status
@@ -67,7 +78,7 @@
 
       @guestbook path /guestbook /guestbook/*
       handle @guestbook {
-        reverse_proxy localhost:8123
+        reverse_proxy localhost:${guestbookPort}
       }
 
       handle {

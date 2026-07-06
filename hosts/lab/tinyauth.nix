@@ -1,5 +1,7 @@
 { config, ... }:
 {
+  services.uptime-page.probes.auth = { url = "https://auth.ily.rs"; order = 90; };
+
   sops.secrets.tinyauth-users = {
     sopsFile = ../../secrets/tinyauth.yaml;
     owner = "podman";

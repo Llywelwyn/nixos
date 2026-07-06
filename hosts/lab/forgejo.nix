@@ -46,6 +46,9 @@ in
 
   networking.firewall.allowedTCPPorts = [ 4201 ];
 
+  services.telegram-alerts.units = [ "forgejo" ];
+  services.uptime-page.probes.git = { url = "https://git.ily.rs"; order = 40; };
+
   systemd.tmpfiles.settings."10-forgejo" = {
     "${cfg.customDir}/templates"."d" = {
       user = "forgejo";

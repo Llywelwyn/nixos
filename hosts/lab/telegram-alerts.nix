@@ -33,50 +33,51 @@ let
       --data-urlencode "disable_web_page_preview=true" >/dev/null
   '';
 
-  alertedServices = [
-    "forgejo"
-    "caddy"
-    "guestbook"
-    "rustypaste"
-    "rustypaste-notify"
-    "rustypaste-bot"
-    "site-webhook"
-  ] ++ map (n: "podman-${n}") (lib.attrNames config.virtualisation.oci-containers.containers);
+  alertedServices = config.services.telegram-alerts.units
+    ++ map (n: "podman-${n}") (lib.attrNames config.virtualisation.oci-containers.containers);
 in
 {
-  sops.secrets.telegram-alert-token = {
-    sopsFile = ../../secrets/guestbook.yaml;
-    key = "telegram_bot_token";
-    mode = "0400";
+  options.services.telegram-alerts.units = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [];
+    description = "Systemd units that send a Telegram alert on failure. Merged from all modules; container units are added automatically.";
   };
 
-  systemd.services = lib.mkMerge [
-    {
-      "telegram-alert@" = {
-        description = "Send Telegram alert for failed unit %i";
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${alertScript} %i";
-        };
-      };
-      disk-usage-alert = {
-        description = "Telegram alert when disk usage crosses threshold";
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = diskAlertScript;
-        };
-      };
-    }
-    (lib.genAttrs alertedServices (_: {
-      unitConfig.OnFailure = [ "telegram-alert@%n.service" ];
-    }))
-  ];
+  config = {
+    sops.secrets.telegram-alert-token = {
+      sopsFile = ../../secrets/guestbook.yaml;
+      key = "telegram_bot_token";
+      mode = "0400";
+    };
 
-  systemd.timers.disk-usage-alert = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "daily";
-      Persistent = true;
+    systemd.services = lib.mkMerge [
+      {
+        "telegram-alert@" = {
+          description = "Send Telegram alert for failed unit %i";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${alertScript} %i";
+          };
+        };
+        disk-usage-alert = {
+          description = "Telegram alert when disk usage crosses threshold";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = diskAlertScript;
+          };
+        };
+      }
+      (lib.genAttrs alertedServices (_: {
+        unitConfig.OnFailure = [ "telegram-alert@%n.service" ];
+      }))
+    ];
+
+    systemd.timers.disk-usage-alert = {
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "daily";
+        Persistent = true;
+      };
     };
   };
 }
