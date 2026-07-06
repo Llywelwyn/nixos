@@ -17,7 +17,7 @@ update:
 
 [doc("Deploy to the lab from another machine (builds on the lab)")]
 deploy-remote:
-    nix run nixpkgs#nixos-rebuild -- switch --flake .#lab --target-host lab --build-host lab --use-remote-sudo
+    nix run --inputs-from . nixpkgs#nixos-rebuild -- switch --flake .#lab --target-host lab --build-host lab --use-remote-sudo
 
 [doc("Lint nix files with statix and deadnix")]
 lint:
