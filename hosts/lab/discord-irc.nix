@@ -18,7 +18,8 @@
       tls = false;
       discordToken = config.sops.placeholder.discord-irc-token;
       webhooks = true;
-      ircStatusNotices = true;
+      ircStatusNotices = false;
+      sendMessageUpdates = true;
       channelMapping = {
         "1507821989300273307" = "#grey-mc";
         "1462196901209440374" = "#grey-dnd";
