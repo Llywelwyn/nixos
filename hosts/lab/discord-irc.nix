@@ -10,8 +10,8 @@
     content = builtins.toJSON {
       nickname = "d";
       format = {
-        ircText = "<{$displayUsername}> {$text}";
-        urlAttachment = "<{$displayUsername}> {$attachmentURL}";
+        ircText = "<{$discordUsername}> {$text}";
+        urlAttachment = "<{$discordUsername}> {$attachmentURL}";
       };
       server = "127.0.0.1";
       port = 6667;
