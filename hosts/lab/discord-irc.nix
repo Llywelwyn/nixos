@@ -6,6 +6,7 @@
 
   sops.templates."discord-irc-config.json" = {
     owner = "podman";
+    restartUnits = [ "podman-discord-irc.service" ];
     content = builtins.toJSON {
       nickname = "d";
       format = {
