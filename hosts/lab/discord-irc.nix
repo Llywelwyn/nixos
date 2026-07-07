@@ -7,7 +7,11 @@
   sops.templates."discord-irc-config.json" = {
     owner = "podman";
     content = builtins.toJSON {
-      nickname = "bridge";
+      nickname = "d";
+      format = {
+        ircText = "<{$displayUsername}> {$text}";
+        urlAttachment = "<{$displayUsername}> {$attachmentURL}";
+      };
       server = "127.0.0.1";
       port = 6667;
       tls = false;
@@ -19,12 +23,15 @@
         "1462196901209440374" = "#grey-dnd";
         "832733970068144221" = "#grey";
         "384092190068047880" = "#icon";
+        "462370232712036355" = "#laiken";
+        "1401241161225732240" = "#laiken-osrs";
+        "1449354793687584880" = "#laiken-osrs-loot";
       };
     };
   };
 
   virtualisation.oci-containers.containers.discord-irc = {
-    image = "ghcr.io/aronson/discord-irc:4.8.0";
+    image = "ghcr.io/aronson/discord-irc:3.1.0";
     podman.user = "podman";
     extraOptions = [ "--network=host" ];
     volumes = [
