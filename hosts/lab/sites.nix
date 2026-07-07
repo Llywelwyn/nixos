@@ -37,6 +37,7 @@ in
       }
 
       redir /p /blog/penfield/ permanent
+      redir /g /guestbook permanent
 
       @guestbook path /guestbook /guestbook/*
       handle @guestbook {
