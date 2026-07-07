@@ -18,6 +18,9 @@
     ./rustypaste.nix
     ./telegram-alerts.nix
     ./goatcounter.nix
+    ./thelounge.nix
+    ./ergo.nix
+    ./discord-irc.nix
     ../../modules/uptime
   ];
 
