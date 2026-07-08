@@ -131,6 +131,7 @@ let
     dtoken=$(tr -d '\n' < ${config.sops.secrets.rustypaste-delete-token.path})
     api="https://api.telegram.org/bot$token"
     offset_file="/srv/rustypaste/.bot-offset"
+    pins="/srv/rustypaste/pins/pins.json"
     offset=$(cat "$offset_file" 2>/dev/null || echo 0)
 
     reply() { # $1: message_id to reply to, $2: text
@@ -140,6 +141,20 @@ let
         --data-urlencode "reply_to_message_id=$1" \
         --data-urlencode "text=$2" \
         --data-urlencode "disable_web_page_preview=true" >/dev/null || true
+    }
+
+    rebuild_site() {
+      for hook in website-rebuild website-lite-rebuild; do
+        ${pkgs.curl}/bin/curl -fsS --max-time 30 -X POST \
+          "http://localhost:4323/hooks/$hook" >/dev/null || true
+      done
+    }
+
+    unpin_entry() { # $1: file name; succeeds only if it was pinned
+      [ -f "$pins" ] || return 1
+      ${pkgs.jq}/bin/jq -e --arg n "$1" 'any(.[]; .name == $n)' "$pins" >/dev/null || return 1
+      updated=$(${pkgs.jq}/bin/jq --arg n "$1" 'map(select(.name != $n))' "$pins") \
+        && printf '%s\n' "$updated" > "$pins"
     }
 
     while :; do
@@ -154,24 +169,62 @@ let
         printf '%s\n' "$offset" > "$offset_file"
         chat=$(${pkgs.jq}/bin/jq -r '.message.chat.id // empty' <<<"$u")
         [ "$chat" = "${chatId}" ] || continue
-        cmd=$(${pkgs.jq}/bin/jq -r '.message.text // empty' <<<"$u" \
-          | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
-        case "$cmd" in delete|/delete|/delete@*) ;; *) continue ;; esac
+        text=$(${pkgs.jq}/bin/jq -r '.message.text // empty' <<<"$u")
+        first=$(printf '%s\n' "$text" | head -1 | sed 's/^[[:space:]]*//')
+        cmd=$(printf '%s' "''${first%% *}" | tr '[:upper:]' '[:lower:]')
+        case "$cmd" in
+          delete|/delete|/delete@*|pin|/pin|/pin@*|unpin|/unpin|/unpin@*) ;;
+          *) continue ;;
+        esac
         msgid=$(${pkgs.jq}/bin/jq -r '.message.message_id' <<<"$u")
         orig=$(${pkgs.jq}/bin/jq -r '.message.reply_to_message.text // empty' <<<"$u")
         name=$(grep -oE 'https://file\.ily\.rs/[A-Za-z0-9._-]+' <<<"$orig" \
           | head -1 | sed 's|.*/||')
         if [ -z "$name" ]; then
-          reply "$msgid" "Reply \"delete\" to an upload notification to remove that file."
+          reply "$msgid" "Reply \"delete\", \"pin\", or \"unpin\" to an upload notification."
           continue
         fi
-        code=$(${pkgs.curl}/bin/curl -sS -o /dev/null -w '%{http_code}' --max-time 10 \
-          -X DELETE -H "Authorization: $dtoken" "http://localhost:${toString port}/$name")
-        if [ "$code" = "200" ]; then
-          reply "$msgid" "🗑 Deleted $name."
-        else
-          reply "$msgid" "Could not delete $name (HTTP $code)."
-        fi
+        case "$cmd" in
+          pin|/pin|/pin@*)
+            desc=$(printf '%s' "$first" | sed 's/^[^ ]* *//')
+            [ -n "$desc" ] || desc=$name
+            # expiring uploads are stored as <name>.<ms-timestamp>; drop the
+            # suffix so a pinned file can no longer expire
+            for f in /srv/rustypaste/upload/"$name".* /srv/rustypaste/upload/url/"$name".*; do
+              [ -e "$f" ] || continue
+              suffix=''${f##*.}
+              case "$suffix" in *[!0-9]*|"") continue ;; esac
+              [ ''${#suffix} -ge 10 ] && mv "$f" "''${f%.*}"
+            done
+            [ -f "$pins" ] || printf '[]\n' > "$pins"
+            if updated=$(${pkgs.jq}/bin/jq --arg n "$name" --arg d "$desc" \
+              'map(select(.name != $n)) + [{name: $n, desc: $d}]' "$pins"); then
+              printf '%s\n' "$updated" > "$pins"
+              rebuild_site
+              reply "$msgid" "📌 Pinned $name: $desc"
+            else
+              reply "$msgid" "Could not update pins.json."
+            fi
+            ;;
+          unpin|/unpin|/unpin@*)
+            if unpin_entry "$name"; then
+              rebuild_site
+              reply "$msgid" "Unpinned $name."
+            else
+              reply "$msgid" "$name is not pinned."
+            fi
+            ;;
+          *)
+            code=$(${pkgs.curl}/bin/curl -sS -o /dev/null -w '%{http_code}' --max-time 10 \
+              -X DELETE -H "Authorization: $dtoken" "http://localhost:${toString port}/$name")
+            if [ "$code" = "200" ]; then
+              unpin_entry "$name" && rebuild_site
+              reply "$msgid" "🗑 Deleted $name."
+            else
+              reply "$msgid" "Could not delete $name (HTTP $code)."
+            fi
+            ;;
+        esac
       done < <(${pkgs.jq}/bin/jq -c '.result[]?' <<<"$updates" 2>/dev/null)
     done
   '';
@@ -203,7 +256,8 @@ in
   users.groups.rustypaste = { };
 
   systemd.tmpfiles.rules = [
-    "d /srv/rustypaste 0750 rustypaste rustypaste -"
+    "d /srv/rustypaste 0751 rustypaste rustypaste -"
+    "d /srv/rustypaste/pins 0755 rustypaste rustypaste -"
     "d /srv/rustypaste/upload 0750 rustypaste rustypaste -"
     "d /srv/rustypaste/upload/oneshot 0750 rustypaste rustypaste -"
     "d /srv/rustypaste/upload/url 0750 rustypaste rustypaste -"
@@ -279,9 +333,17 @@ in
       encode zstd gzip
       root * ${./rustypaste-web}
 
+      rewrite /write /write.html
+
       @health path /health-ping
       handle @health {
         respond 200
+      }
+
+      @pins path /pins.json
+      handle @pins {
+        root * /srv/rustypaste/pins
+        file_server
       }
 
       @page {

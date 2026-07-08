@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width,initial-scale=1" name="viewport">
+<title>file.ily.rs</title>
+<link href="https://ily.rs/style.css" rel="stylesheet">
+<link href="https://cdn.ily.rs/mascot.css" rel="stylesheet">
+<style>
+  textarea { width: 100%; }
+  .opts label + label { margin-left: 1.5rem; }
+  .result { display: none; }
+  .result.show { display: inline; }
+  .err { display: none; color: #c00; }
+  .err.show { display: block; }
+</style>
+</head>
+<body>
+  <textarea id="text" rows="20"></textarea>
+  <p class="opts">
+    <label>Expire <select id="expire">
+      <option value="">never</option>
+      <option value="oneshot">once opened</option>
+      <option value="10min">10 minutes</option>
+      <option value="1h">1 hour</option>
+      <option value="1d">1 day</option>
+      <option value="1w">1 week</option>
+      <option value="1month">1 month</option>
+    </select></label>
+    <label>Name <input type="text" id="fname" size="10"></label>
+    <button id="upload">upload</button>
+  </p>
+
+  <p><span class="result" id="result"><a id="link" href="#" target="_blank" rel="noopener"></a> &mdash; <a href="#" id="copy">copy</a></span></p>
+  <p class="err" id="err"></p>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const text=$('text'), expire=$('expire'), fname=$('fname'), upload=$('upload'),
+        result=$('result'), link=$('link'), copy=$('copy'), err=$('err');
+
+  function fail(m){ err.textContent='Error: '+m; err.classList.add('show'); }
+  function done(url){ link.textContent=url; link.href=url; result.classList.add('show'); }
+
+  upload.addEventListener('click', async ()=>{
+    result.classList.remove('show'); err.classList.remove('show');
+    if(!text.value) return fail('nothing to upload');
+    const oneshot = expire.value==='oneshot';
+    let n = fname.value.trim();
+    if(n && !n.includes('.')) n += '.txt';
+    const fd = new FormData();
+    fd.append(oneshot?'oneshot':'file', new File([text.value], n||'paste.txt', {type:'text/plain'}));
+    const headers = {};
+    if(expire.value && !oneshot) headers.expire = expire.value;
+    try{
+      const r = await fetch('/', {method:'POST', headers, body:fd});
+      const t = (await r.text()).trim();
+      r.ok ? done(t) : fail(r.status===409 ? 'that name is already taken (409)' : 'server returned '+r.status);
+    }catch{ fail('upload failed (network error)'); }
+  });
+
+  copy.addEventListener('click', async e=>{ e.preventDefault(); try{ await navigator.clipboard.writeText(link.href);
+    copy.textContent='copied'; setTimeout(()=>copy.textContent='copy',1400);
+  }catch{ fail('clipboard blocked'); } });
+</script>
+<script>
+  window.goatcounter = { path: function (p) { return location.host + p } };
+</script>
+<script data-goatcounter="https://stats.ily.rs/count" async src="https://stats.ily.rs/count.js"></script>
+</body>
+</html>
