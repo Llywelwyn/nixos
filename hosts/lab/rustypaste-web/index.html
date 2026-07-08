@@ -99,7 +99,10 @@
   function sendUrl(u){
     const fd=new FormData();
     fd.append(oneshot()?'oneshot_url':'url', u);
-    post(fd, expiry());
+    const h=expiry();
+    const n=fname.value.trim();
+    if(n) h.push(['filename', n]);
+    post(fd, h);
   }
 
   pick.addEventListener('click', e=>{ e.preventDefault(); input.click(); });

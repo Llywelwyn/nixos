@@ -217,7 +217,21 @@ let
           *)
             code=$(${pkgs.curl}/bin/curl -sS -o /dev/null -w '%{http_code}' --max-time 10 \
               -X DELETE -H "Authorization: $dtoken" "http://localhost:${toString port}/$name")
-            if [ "$code" = "200" ]; then
+            deleted=""
+            [ "$code" = "200" ] && deleted=1
+            if [ -z "$deleted" ]; then
+              for d in url oneshot_url oneshot; do
+                base="/srv/rustypaste/upload/$d/$name"
+                [ -f "$base" ] && rm -f "$base" && deleted=1
+                for f in "$base".*; do
+                  [ -f "$f" ] || continue
+                  suffix=''${f##*.}
+                  case "$suffix" in *[!0-9]*|"") continue ;; esac
+                  [ ''${#suffix} -ge 10 ] && rm -f "$f" && deleted=1
+                done
+              done
+            fi
+            if [ -n "$deleted" ]; then
               unpin_entry "$name" && rebuild_site
               reply "$msgid" "🗑 Deleted $name."
             else
