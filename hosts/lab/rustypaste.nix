@@ -252,6 +252,7 @@ in
     group = "rustypaste";
     home = "/srv/rustypaste";
     createHome = true;
+    homeMode = "751";
   };
   users.groups.rustypaste = { };
 
