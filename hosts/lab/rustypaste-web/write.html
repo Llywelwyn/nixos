@@ -52,6 +52,7 @@
     fd.append(oneshot?'oneshot':'file', new File([text.value], n||'paste.txt', {type:'text/plain'}));
     const headers = {};
     if(expire.value && !oneshot) headers.expire = expire.value;
+    if(n) headers.filename = n;
     try{
       const r = await fetch('/', {method:'POST', headers, body:fd});
       const t = (await r.text()).trim();
