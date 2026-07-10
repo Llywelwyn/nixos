@@ -5,6 +5,7 @@
     home-manager = {
       useGlobalPkgs = true;
       useUserPackages = true;
+      backupFileExtension = "hm-backup";
       sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
       users.l.imports = [ config.flake.modules.homeManager.base ];
     };
