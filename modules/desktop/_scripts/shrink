@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+MAX_MB=10
+
+usage() {
+    cat <<'EOF'
+Usage: shrink [-s MB] <input> [output]
+
+Compress a video to a target file size using two-pass x264 encoding.
+
+Options:
+  -s MB         Target file size in MB (default: 10)
+  -h            Show this help
+
+If output is omitted, saves to <input>-shrunk.mp4.
+EOF
+    exit 0
+}
+
+while getopts ":s:h" opt; do
+    case $opt in
+        s) MAX_MB=$OPTARG ;;
+        h) usage ;;
+        :) echo "Option -$OPTARG requires an argument" >&2; exit 1 ;;
+        *) usage ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+input=${1:?Usage: shrink [-s MB] <input> [output]}
+output=${2:-${input%.mp4}-shrunk.mp4}
+
+[[ -f $input ]] || { echo "File not found: $input" >&2; exit 1; }
+
+file_bytes=$(stat -c%s "$input")
+max_bytes=$((MAX_MB * 1048576))
+file_mb=$(awk "BEGIN {printf \"%.1f\", $file_bytes / 1048576}")
+
+if [[ $file_bytes -le $max_bytes ]]; then
+    echo "Already ${file_mb}MB (under ${MAX_MB}MB), nothing to do"
+    exit 0
+fi
+
+duration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$input")
+audio_bitrate=128
+video_bitrate=$(awk "BEGIN {v = ($MAX_MB * 8192 / $duration) - $audio_bitrate; printf \"%d\", (v > 0 ? v : 1)}")
+
+echo "Compressing ${file_mb}MB → ${MAX_MB}MB target..."
+echo "  Pass 1/2 (video: ${video_bitrate}kbps)..."
+ffmpeg -y -i "$input" -c:v libx264 -b:v "${video_bitrate}k" -pass 1 -an -f null /dev/null 2>/dev/null
+echo "  Pass 2/2..."
+ffmpeg -y -i "$input" -c:v libx264 -b:v "${video_bitrate}k" -pass 2 -c:a aac -b:a "${audio_bitrate}k" "$output" 2>/dev/null
+rm -f ffmpeg2pass-0.log ffmpeg2pass-0.log.mbtree
+
+final_mb=$(awk "BEGIN {printf \"%.1f\", $(stat -c%s "$output") / 1048576}")
+echo "Done: ${file_mb}MB → ${final_mb}MB → $output"

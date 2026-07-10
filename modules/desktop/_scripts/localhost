@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PORT=8000
+
+IP=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}')
+IP=${IP:-127.0.0.1}
+
+if [[ -t 1 ]]; then
+  YELLOW=$(tput setaf 3)
+  BLUE=$(tput setaf 4)
+  BOLD=$(tput bold)
+  RESET=$(tput sgr0)
+else
+  YELLOW= BLUE= BOLD= RESET=
+fi
+
+echo "Serving ${YELLOW}${BOLD}$(pwd)${RESET} at ${BLUE}${BOLD}http://${IP}:${PORT}${RESET}"
+
+exec python3 -m http.server "$PORT"

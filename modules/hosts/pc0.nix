@@ -4,10 +4,11 @@
     modules = [
       config.flake.modules.nixos.base
       config.flake.modules.nixos.desktop
+      inputs.impermanence.nixosModules.impermanence
       ./_pc0-hardware.nix
+      ./_pc0-impermanence.nix
       ({ config, ... }: {
         networking.hostName = "pc0";
-        users.users.l.initialPassword = "nixos";
 
         services.xserver.videoDrivers = [ "nvidia" ];
         hardware.nvidia = {

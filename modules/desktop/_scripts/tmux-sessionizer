@@ -1,0 +1,206 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SELF="$(realpath "$0")"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux-sessionizer"
+CONFIG_FILE="$CONFIG_DIR/sources.conf"
+
+DEFAULT_SPECS=(
+  "$HOME/src/github|2|2"
+  "$HOME/src/aur|1|1"
+  "$HOME/.config|0|1"
+  "$HOME/.local/bin|0|0"
+)
+
+# --- Path shortening ---
+# Shorten all but last 2 components: ~/src/github/user/repo → ~/s/g/user/repo
+# Dotfile components keep the dot: .config → .c
+_shorten_paths() {
+  awk -v home="$HOME" '{
+    p = $0
+    if (index(p, home) == 1) p = "~" substr(p, length(home) + 1)
+    n = split(p, parts, "/")
+    result = ""
+    for (i = 1; i <= n; i++) {
+      if (i == 1) {
+        result = parts[i]
+      } else if (i <= n - 2) {
+        if (substr(parts[i], 1, 1) == ".")
+          result = result "/" substr(parts[i], 1, 2)
+        else
+          result = result "/" substr(parts[i], 1, 1)
+      } else {
+        result = result "/" parts[i]
+      }
+    }
+    print $0 "\t" result
+  }'
+}
+
+# --- Internal subcommands (called by fzf) ---
+
+_preview() {
+  local item="$1"
+  if [[ "$item" == SESSION:* ]]; then
+    local name="${item#SESSION:}"
+    printf '\e[1;33mSession: %s\e[0m\n\n' "$name"
+    tmux list-windows -t "$name" \
+      -F '  #{window_index}: #{window_name}#{?window_active, (active),} — #{pane_current_command}' 2>/dev/null
+  else
+    if command -v eza >/dev/null 2>&1; then
+      eza -la --icons --no-permissions --no-user --no-time "$item" 2>/dev/null
+    elif command -v tree >/dev/null 2>&1; then
+      tree -L 1 -a --noreport "$item" 2>/dev/null
+    else
+      ls -la "$item" 2>/dev/null
+    fi
+  fi
+}
+
+_kill_session() {
+  local item="$1"
+  if [[ "$item" == SESSION:* ]]; then
+    local name="${item#SESSION:}"
+    tmux kill-session -t "$name" 2>/dev/null || true
+  fi
+}
+
+_rename_session() {
+  local item="$1"
+  if [[ "$item" != SESSION:* ]]; then
+    echo "Not a session."
+    read -r
+    return
+  fi
+  local name="${item#SESSION:}"
+  printf 'Rename session "%s" to: ' "$name"
+  read -r new_name
+  [[ -z "$new_name" ]] && return
+  tmux rename-session -t "$name" "$new_name" 2>/dev/null
+}
+
+_load_specs() {
+  if [[ -f "$CONFIG_FILE" ]]; then
+    local found=false
+    while IFS= read -r line; do
+      line="${line%%#*}"
+      [[ -z "${line// /}" ]] && continue
+      line="${line//\~/$HOME}"
+      local path min max
+      IFS='|' read -r path min max <<< "$line"
+      path="${path#"${path%%[![:space:]]*}"}"; path="${path%"${path##*[![:space:]]}"}"
+      min="${min#"${min%%[![:space:]]*}"}"; min="${min%"${min##*[![:space:]]}"}"
+      max="${max#"${max%%[![:space:]]*}"}"; max="${max%"${max##*[![:space:]]}"}"
+      printf '%s|%s|%s\n' "$path" "$min" "$max"
+      found=true
+    done < "$CONFIG_FILE"
+    $found && return
+  fi
+  printf '%s\n' "${DEFAULT_SPECS[@]}"
+}
+
+_list() {
+  # Active tmux sessions (keyed with SESSION: prefix)
+  while IFS='|' read -r name windows path; do
+    [[ -z "$name" ]] && continue
+    local short_path="$path"
+    [[ "$short_path" == "$HOME"* ]] && short_path="~${short_path#"$HOME"}"
+    printf 'SESSION:%s\t* %s (%s win) [%s]\n' "$name" "$name" "$windows" "$short_path"
+  done < <(tmux list-sessions -F '#{session_name}|#{session_windows}|#{session_path}' 2>/dev/null || true)
+
+  # Directories from config
+  local use_fd=false
+  command -v fd >/dev/null 2>&1 && use_fd=true
+
+  while IFS='|' read -r path min max; do
+    [[ -d "$path" ]] || continue
+    if [[ "$min" -eq 0 && "$max" -eq 0 ]]; then
+      printf '%s\n' "$path"
+    elif $use_fd; then
+      fd --type d --min-depth "$min" --max-depth "$max" . "$path" 2>/dev/null
+    else
+      find "$path" -mindepth "$min" -maxdepth "$max" -type d 2>/dev/null
+    fi
+  done < <(_load_specs) | sed 's:/$::' | sort -u | _shorten_paths
+}
+
+# Find existing session by working directory
+_find_session_by_path() {
+  local target="$1"
+  tmux list-sessions -F '#{session_name}|#{session_path}' 2>/dev/null |
+    awk -F'|' -v p="$target" '$2 == p { print $1; exit }'
+}
+
+# Route subcommands
+case "${1:-}" in
+  --preview)        shift; _preview "$1"; exit 0 ;;
+  --kill-session)   shift; _kill_session "$1"; exit 0 ;;
+  --rename-session) shift; _rename_session "$1"; exit 0 ;;
+  --list)           _list; exit 0 ;;
+esac
+
+# --- Main ---
+
+edit_mode=false
+
+if [[ $# -eq 1 ]]; then
+  selected="$1"
+else
+  selected=$(
+    "$SELF" --list | fzf \
+      --delimiter '\t' \
+      --with-nth 2 \
+      --header 'C-x:kill  C-e:editor  C-r:rename  ?:preview' \
+      --preview "$SELF --preview {1}" \
+      --preview-window 'top:33%' \
+      --bind "ctrl-x:execute-silent($SELF --kill-session {1})+reload($SELF --list)" \
+      --bind "ctrl-r:execute($SELF --rename-session {1})+reload($SELF --list)" \
+      --bind "ctrl-e:become(printf 'EDIT\t%s' {1})" \
+      --bind '?:toggle-preview'
+  ) || true
+fi
+
+[[ -z "${selected:-}" ]] && exit 0
+
+# Extract the key (full path or SESSION:name) from the tab-delimited line
+selected_key="${selected%%	*}"
+
+# Detect edit mode from ctrl-e
+if [[ "$selected_key" == EDIT ]]; then
+  edit_mode=true
+  selected_key=$(cut -f2 <<< "$selected")
+fi
+
+# Handle active session vs directory
+if [[ "$selected_key" == SESSION:* ]]; then
+  selected_name="${selected_key#SESSION:}"
+else
+  selected="$selected_key"
+
+  # Check for existing session by working directory first (supports renamed sessions)
+  selected_name=$(_find_session_by_path "$selected")
+
+  if [[ -z "$selected_name" ]]; then
+    selected_name=$(basename "$selected" | tr -c '[:alnum:]' '_' | sed 's/^_*//;s/_*$//')
+    [[ -z "$selected_name" ]] && selected_name="sess_$(date +%s)"
+
+    if [[ -z "${TMUX:-}" ]] && ! tmux list-sessions &>/dev/null; then
+      if $edit_mode; then
+        exec tmux new-session -s "$selected_name" -c "$selected" "${EDITOR:-nvim}" .
+      fi
+      exec tmux new-session -s "$selected_name" -c "$selected"
+    fi
+    tmux new-session -ds "$selected_name" -c "$selected"
+    tmux rename-window -t "$selected_name:" "shell"
+  fi
+fi
+
+if $edit_mode; then
+  tmux send-keys -t "$selected_name" "${EDITOR:-nvim} ." Enter
+fi
+
+if [[ -z "${TMUX:-}" ]]; then
+  tmux attach -t "$selected_name"
+else
+  tmux switch-client -t "$selected_name"
+fi

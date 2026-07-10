@@ -17,11 +17,24 @@
       device = "/dev/disk/by-uuid/26523e8e-e131-4f5f-bd37-4e94268dca17";
       fsType = "btrfs";
       options = [ "subvol=@home" ];
+      neededForBoot = true;
     };
     "/nix" = {
       device = "/dev/disk/by-uuid/26523e8e-e131-4f5f-bd37-4e94268dca17";
       fsType = "btrfs";
       options = [ "subvol=@nix" ];
+    };
+    "/persist" = {
+      device = "/dev/disk/by-uuid/26523e8e-e131-4f5f-bd37-4e94268dca17";
+      fsType = "btrfs";
+      options = [ "subvol=@persist" ];
+      neededForBoot = true;
+    };
+    "/data" = {
+      device = "/dev/disk/by-label/data";
+      fsType = "btrfs";
+      options = [ "compress=zstd" ];
+      neededForBoot = true;
     };
     "/boot" = {
       device = "/dev/disk/by-uuid/52A0-A4AA";
