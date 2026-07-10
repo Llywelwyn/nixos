@@ -201,7 +201,9 @@
               root * ${site.dataDir}/repo/${site.buildOutputDir}
               encode zstd gzip
               try_files {path} /index.html
-              file_server
+              file_server {
+                hide .git
+              }
             '' else ''
               import favicons
               reverse_proxy localhost:${toString site.port}
@@ -227,7 +229,9 @@
               root * ${previewDataDir}/repo/${site.buildOutputDir}
               encode zstd gzip
               try_files {path} /index.html
-              file_server
+              file_server {
+                hide .git
+              }
             }
           '' else ''
             import favicons
@@ -283,6 +287,8 @@
         } // optionalAttrs (!site.static) {
           ${id} = {
             description = serveDescription;
+            wantedBy = [ "multi-user.target" ];
+            unitConfig.ConditionPathExists = "${dataDir}/repo";
             environment = {
               HOST = "127.0.0.1";
               PORT = toString port;
