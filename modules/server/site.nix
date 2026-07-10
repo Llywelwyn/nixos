@@ -320,7 +320,7 @@
                 ];
               }) deployments;
               hooksFile = pkgs.writeText "site-hooks.json" (builtins.toJSON allHooks);
-            in "${pkgs.webhook}/bin/webhook -hooks ${hooksFile} -port ${toString webhookPort} -verbose";
+            in "${pkgs.webhook}/bin/webhook -hooks ${hooksFile} -ip 127.0.0.1 -port ${toString webhookPort} -verbose";
             Restart = "always";
             DynamicUser = true;
             RuntimeDirectory = "site-rebuild";
