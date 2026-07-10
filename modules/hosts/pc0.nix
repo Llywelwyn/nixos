@@ -11,8 +11,6 @@
 
         services.xserver.videoDrivers = [ "nvidia" ];
         hardware.nvidia = {
-          modesetting.enable = true;
-          nvidiaSettings = true;
           open = false;
           # GTX 1080 (Pascal): dropped from mainline 595+, needs legacy branch
           package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
