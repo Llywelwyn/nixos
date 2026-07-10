@@ -8,5 +8,6 @@
       desktopManager.plasma6.enable = true;
       xserver.xkb.layout = "gb";
     };
+    console.useXkbConfig = true;
   };
 }
