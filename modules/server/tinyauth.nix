@@ -1,28 +1,30 @@
 {
   flake.modules.nixos.server = { config, ... }:
   {
-    services.uptime-page.probes.auth = { url = "https://auth.ily.rs"; order = 90; };
-
     sops.secrets.tinyauth-users = {
       sopsFile = ../../secrets/tinyauth.yaml;
       owner = "podman";
     };
 
-    services.caddy.extraConfig = ''
-      (tinyauth) {
-        forward_auth localhost:3002 {
-          uri /api/auth/caddy
-          copy_headers Remote-User Remote-Name Remote-Email Remote-Groups
-        }
-      }
-    '';
+    services = {
+      uptime-page.probes.auth = { url = "https://auth.ily.rs"; order = 90; };
 
-    services.caddy.virtualHosts."auth.ily.rs" = {
-      extraConfig = ''
-        import favicons
-        reverse_proxy localhost:3002
-        encode zstd gzip
+      caddy.extraConfig = ''
+        (tinyauth) {
+          forward_auth localhost:3002 {
+            uri /api/auth/caddy
+            copy_headers Remote-User Remote-Name Remote-Email Remote-Groups
+          }
+        }
       '';
+
+      caddy.virtualHosts."auth.ily.rs" = {
+        extraConfig = ''
+          import favicons
+          reverse_proxy localhost:3002
+          encode zstd gzip
+        '';
+      };
     };
 
     virtualisation.oci-containers.containers.tinyauth = {

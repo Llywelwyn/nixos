@@ -34,42 +34,46 @@
     };
   in
   {
-    services.goatcounter = {
-      enable = true;
-      port = 8081;
-      proxy = true;
-    };
-
-    services.uptime-page.probes.stats = { url = "https://stats.ily.rs"; order = 110; };
-
-    services.caddy.virtualHosts."stats.ily.rs" = {
-      extraConfig = ''
-        import favicons
-        reverse_proxy localhost:8081
-        encode zstd gzip
-      '';
-    };
-
     sops.secrets.goatcounter_api_key = {
       sopsFile = ../../secrets/goatcounter.yaml;
       key = "api_key";
     };
 
-    systemd.services.goatcounter-import-file = mkImport "file.ily.rs" [
-      ''path:re:^/file\.ily\.rs/$''
-      ''path:re:^/file\.ily\.rs/(health-ping$|favicon|apple-touch-icon|robots\.txt)''
-    ];
+    services = {
+      goatcounter = {
+        enable = true;
+        port = 8081;
+        proxy = true;
+      };
 
-    systemd.services.goatcounter-import-lite = mkImport "lite.ily.rs" [
-      "user_agent:curl"
-      ''path:re:^/lite\.ily\.rs/(favicon|apple-touch-icon|robots\.txt)''
-      ''path:re:\.(css|xml|png|jpe?g|gif|webp|ico|webm|ogg|mp3)$''
-    ];
+      uptime-page.probes.stats = { url = "https://stats.ily.rs"; order = 110; };
 
-    systemd.services.goatcounter-import-penfield = mkImport "penfield.ily.rs" [
-      "user_agent:curl"
-      ''path:re:^/penfield\.ily\.rs/(favicon|apple-touch-icon|robots\.txt)''
-    ];
+      caddy.virtualHosts."stats.ily.rs" = {
+        extraConfig = ''
+          import favicons
+          reverse_proxy localhost:8081
+          encode zstd gzip
+        '';
+      };
+    };
+
+    systemd.services = {
+      goatcounter-import-file = mkImport "file.ily.rs" [
+        ''path:re:^/file\.ily\.rs/$''
+        ''path:re:^/file\.ily\.rs/(health-ping$|favicon|apple-touch-icon|robots\.txt)''
+      ];
+
+      goatcounter-import-lite = mkImport "lite.ily.rs" [
+        "user_agent:curl"
+        ''path:re:^/lite\.ily\.rs/(favicon|apple-touch-icon|robots\.txt)''
+        ''path:re:\.(css|xml|png|jpe?g|gif|webp|ico|webm|ogg|mp3)$''
+      ];
+
+      goatcounter-import-penfield = mkImport "penfield.ily.rs" [
+        "user_agent:curl"
+        ''path:re:^/penfield\.ily\.rs/(favicon|apple-touch-icon|robots\.txt)''
+      ];
+    };
 
     environment.systemPackages = [ goatcounter ];
   };

@@ -1,14 +1,10 @@
 {
-  flake.modules.nixos.server = { ... }:
-  let
-    faviconRoot = ./favicons;
-  in
-  {
+  flake.modules.nixos.server = {
     services.caddy.extraConfig = ''
       (favicons) {
         @favicon path /favicon.ico /favicon.svg /favicon.png /apple-touch-icon.png /apple-touch-icon-precomposed.png
         handle @favicon {
-          root * ${faviconRoot}
+          root * ${./favicons}
           @needs_png path /favicon.ico
           rewrite @needs_png /favicon.png
           @needs_touch path /apple-touch-icon-precomposed.png

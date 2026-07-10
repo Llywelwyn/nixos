@@ -245,31 +245,31 @@
     '';
   in
   {
-    services.telegram-alerts.units = [ "rustypaste" "rustypaste-notify" "rustypaste-bot" ];
-    services.uptime-page.probes.file = { url = "https://file.ily.rs/health-ping"; order = 30; };
-
-    sops.secrets.rustypaste-delete-token = {
-      sopsFile = ../../secrets/rustypaste.yaml;
-      key = "delete_token";
-      owner = "rustypaste";
-      mode = "0400";
+    sops.secrets = {
+      rustypaste-delete-token = {
+        sopsFile = ../../secrets/rustypaste.yaml;
+        key = "delete_token";
+        owner = "rustypaste";
+        mode = "0400";
+      };
+      rustypaste-telegram-token = {
+        sopsFile = ../../secrets/rustypaste.yaml;
+        key = "telegram_bot_token";
+        owner = "rustypaste";
+        mode = "0400";
+      };
     };
 
-    sops.secrets.rustypaste-telegram-token = {
-      sopsFile = ../../secrets/rustypaste.yaml;
-      key = "telegram_bot_token";
-      owner = "rustypaste";
-      mode = "0400";
+    users = {
+      users.rustypaste = {
+        isSystemUser = true;
+        group = "rustypaste";
+        home = "/srv/rustypaste";
+        createHome = true;
+        homeMode = "751";
+      };
+      groups.rustypaste = { };
     };
-
-    users.users.rustypaste = {
-      isSystemUser = true;
-      group = "rustypaste";
-      home = "/srv/rustypaste";
-      createHome = true;
-      homeMode = "751";
-    };
-    users.groups.rustypaste = { };
 
     systemd.tmpfiles.rules = [
       "d /srv/rustypaste 0751 rustypaste rustypaste -"
@@ -280,109 +280,116 @@
       "d /srv/rustypaste/upload/oneshot_url 0750 rustypaste rustypaste -"
     ];
 
-    systemd.services.rustypaste = {
-      description = "rustypaste file/paste server";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
-      serviceConfig = {
-        User = "rustypaste";
-        Group = "rustypaste";
-        WorkingDirectory = "/srv/rustypaste";
-        ExecStart = "${pkgs.rustypaste}/bin/rustypaste";
-        Environment = [
-          "CONFIG=${configFile}"
-          "DELETE_TOKENS_FILE=${config.sops.secrets.rustypaste-delete-token.path}"
-        ];
-        Restart = "on-failure";
-        RestartSec = 5;
-        ReadWritePaths = [ "/srv/rustypaste" ];
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        NoNewPrivileges = true;
+    systemd.services = {
+      rustypaste = {
+        description = "rustypaste file/paste server";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "network.target" ];
+        serviceConfig = {
+          User = "rustypaste";
+          Group = "rustypaste";
+          WorkingDirectory = "/srv/rustypaste";
+          ExecStart = "${pkgs.rustypaste}/bin/rustypaste";
+          Environment = [
+            "CONFIG=${configFile}"
+            "DELETE_TOKENS_FILE=${config.sops.secrets.rustypaste-delete-token.path}"
+          ];
+          Restart = "on-failure";
+          RestartSec = 5;
+          ReadWritePaths = [ "/srv/rustypaste" ];
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          PrivateTmp = true;
+          NoNewPrivileges = true;
+        };
+      };
+
+      rustypaste-notify = {
+        description = "Telegram notification on rustypaste upload";
+        wantedBy = [ "multi-user.target" ];
+        requires = [ "rustypaste.service" ];
+        after = [ "rustypaste.service" ];
+        serviceConfig = {
+          Type = "simple";
+          User = "rustypaste";
+          Group = "rustypaste";
+          ExecStart = notifyScript;
+          Restart = "on-failure";
+          RestartSec = 5;
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          PrivateTmp = true;
+          NoNewPrivileges = true;
+        };
+      };
+
+      rustypaste-bot = {
+        description = "Telegram reply-to-delete bot for rustypaste";
+        wantedBy = [ "multi-user.target" ];
+        requires = [ "rustypaste.service" ];
+        wants = [ "network-online.target" ];
+        after = [ "rustypaste.service" "network-online.target" ];
+        serviceConfig = {
+          Type = "simple";
+          User = "rustypaste";
+          Group = "rustypaste";
+          ExecStart = botScript;
+          Restart = "on-failure";
+          RestartSec = 5;
+          ReadWritePaths = [ "/srv/rustypaste" ];
+          ProtectSystem = "strict";
+          ProtectHome = true;
+          PrivateTmp = true;
+          NoNewPrivileges = true;
+        };
       };
     };
 
-    systemd.services.rustypaste-notify = {
-      description = "Telegram notification on rustypaste upload";
-      wantedBy = [ "multi-user.target" ];
-      requires = [ "rustypaste.service" ];
-      after = [ "rustypaste.service" ];
-      serviceConfig = {
-        Type = "simple";
-        User = "rustypaste";
-        Group = "rustypaste";
-        ExecStart = notifyScript;
-        Restart = "on-failure";
-        RestartSec = 5;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        NoNewPrivileges = true;
+    services = {
+      telegram-alerts.units = [ "rustypaste" "rustypaste-notify" "rustypaste-bot" ];
+      uptime-page.probes.file = { url = "https://file.ily.rs/health-ping"; order = 30; };
+
+      caddy.virtualHosts."file.ily.rs" = {
+        extraConfig = ''
+          import favicons
+          encode zstd gzip
+          root * ${./rustypaste-web}
+
+          rewrite /write /write.html
+
+          @health path /health-ping
+          handle @health {
+            respond 200
+          }
+
+          @pins path /pins.json
+          handle @pins {
+            root * /srv/rustypaste/pins
+            file_server
+          }
+
+          @page {
+            method GET
+            path /
+          }
+          handle @page {
+            file_server
+          }
+
+          @asset {
+            method GET
+            file
+          }
+          handle @asset {
+            file_server
+          }
+
+          handle {
+            header Content-Security-Policy "sandbox allow-same-origin"
+            reverse_proxy localhost:${toString port}
+          }
+        '';
       };
-    };
-
-    systemd.services.rustypaste-bot = {
-      description = "Telegram reply-to-delete bot for rustypaste";
-      wantedBy = [ "multi-user.target" ];
-      requires = [ "rustypaste.service" ];
-      wants = [ "network-online.target" ];
-      after = [ "rustypaste.service" "network-online.target" ];
-      serviceConfig = {
-        Type = "simple";
-        User = "rustypaste";
-        Group = "rustypaste";
-        ExecStart = botScript;
-        Restart = "on-failure";
-        RestartSec = 5;
-        ReadWritePaths = [ "/srv/rustypaste" ];
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        PrivateTmp = true;
-        NoNewPrivileges = true;
-      };
-    };
-
-    services.caddy.virtualHosts."file.ily.rs" = {
-      extraConfig = ''
-        import favicons
-        encode zstd gzip
-        root * ${./rustypaste-web}
-
-        rewrite /write /write.html
-
-        @health path /health-ping
-        handle @health {
-          respond 200
-        }
-
-        @pins path /pins.json
-        handle @pins {
-          root * /srv/rustypaste/pins
-          file_server
-        }
-
-        @page {
-          method GET
-          path /
-        }
-        handle @page {
-          file_server
-        }
-
-        @asset {
-          method GET
-          file
-        }
-        handle @asset {
-          file_server
-        }
-
-        handle {
-          header Content-Security-Policy "sandbox allow-same-origin"
-          reverse_proxy localhost:${toString port}
-        }
-      '';
     };
   };
 }

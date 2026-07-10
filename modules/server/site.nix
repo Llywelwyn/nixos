@@ -144,9 +144,7 @@
       (mapAttrsToList (name: site: {
         inherit site;
         id = name;
-        branch = site.branch;
-        dataDir = site.dataDir;
-        port = site.port;
+        inherit (site) branch dataDir port;
         rebuildDescription = "Clone/pull and build ${site.domain}";
         serveDescription = site.domain;
       }) cfg)
@@ -192,7 +190,7 @@
         message = "services.site.${name}.preview.port is required when static = false and preview is enabled";
       }) previewCfg);
 
-      services.caddy.virtualHosts = mkMerge ((mapAttrsToList (name: site:
+      services.caddy.virtualHosts = mkMerge ((mapAttrsToList (_: site:
         {
           ${site.domain}.extraConfig =
             if site.caddyConfig != null then site.caddyConfig

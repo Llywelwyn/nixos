@@ -1,6 +1,5 @@
 {
-  flake.modules.nixos.server = { ... }:
-  {
+  flake.modules.nixos.server = {
     services.fail2ban = {
       enable = true;
       bantime-increment = {

@@ -1,6 +1,5 @@
 {
-  flake.modules.nixos.server = { ... }:
-  {
+  flake.modules.nixos.server = {
     services.uptime-page.probes.foundry = { url = "https://foundry.ily.rs"; order = 80; };
 
     services.caddy.virtualHosts."foundry.ily.rs" = {

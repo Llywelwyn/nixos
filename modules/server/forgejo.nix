@@ -16,39 +16,41 @@
       owner = "forgejo";
     };
 
-    services.caddy.virtualHosts."git.ily.rs" = {
-      extraConfig = ''
-        import favicons
-        reverse_proxy localhost:${toString srv.HTTP_PORT}
-        encode zstd gzip
-      '';
-    };
+    networking.firewall.allowedTCPPorts = [ 4201 ];
 
-    services.forgejo = {
-      enable = true;
-      database.type = "sqlite3";
-      lfs.enable = true;
-      settings = {
-        server = {
-          DOMAIN = "git.ily.rs";
-          ROOT_URL = "https://git.ily.rs/";
-          HTTP_PORT = 3000;
-          SSH_DOMAIN = "git.ily.rs";
-          START_SSH_SERVER = true;
-          SSH_PORT = 4201;
-          SSH_LISTEN_PORT = 4201;
-        };
-        service.DISABLE_REGISTRATION = true;
-        webhook = {
-          ALLOWED_HOST_LIST = "loopback";
+    services = {
+      telegram-alerts.units = [ "forgejo" ];
+      uptime-page.probes.git = { url = "https://git.ily.rs"; order = 40; };
+
+      caddy.virtualHosts."git.ily.rs" = {
+        extraConfig = ''
+          import favicons
+          reverse_proxy localhost:${toString srv.HTTP_PORT}
+          encode zstd gzip
+        '';
+      };
+
+      forgejo = {
+        enable = true;
+        database.type = "sqlite3";
+        lfs.enable = true;
+        settings = {
+          server = {
+            DOMAIN = "git.ily.rs";
+            ROOT_URL = "https://git.ily.rs/";
+            HTTP_PORT = 3000;
+            SSH_DOMAIN = "git.ily.rs";
+            START_SSH_SERVER = true;
+            SSH_PORT = 4201;
+            SSH_LISTEN_PORT = 4201;
+          };
+          service.DISABLE_REGISTRATION = true;
+          webhook = {
+            ALLOWED_HOST_LIST = "loopback";
+          };
         };
       };
     };
-
-    networking.firewall.allowedTCPPorts = [ 4201 ];
-
-    services.telegram-alerts.units = [ "forgejo" ];
-    services.uptime-page.probes.git = { url = "https://git.ily.rs"; order = 40; };
 
     systemd.tmpfiles.settings."10-forgejo" = {
       "${cfg.customDir}/templates"."d" = {
