@@ -1,7 +1,7 @@
 {
   flake.modules.nixos.server = { config, pkgs, ... }:
   let
-    chatId = "8669496383";
+    chatId = toString config.services.telegram-alerts.chatId;
     port = 8000;
 
     settings = {

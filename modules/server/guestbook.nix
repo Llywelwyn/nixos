@@ -42,7 +42,7 @@
 
         telegram = {
           enable = true;
-          chatId = 8669496383;
+          chatId = config.services.telegram-alerts.chatId;
           botTokenFile = config.sops.secrets.telegram_bot_token.path;
         };
 

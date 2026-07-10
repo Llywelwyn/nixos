@@ -1,7 +1,7 @@
 {
   flake.modules.nixos.server = { config, pkgs, lib, ... }:
   let
-    chatId = "8669496383";
+    chatId = toString config.services.telegram-alerts.chatId;
     host = config.networking.hostName;
 
     alertScript = pkgs.writeShellScript "telegram-alert" ''
@@ -38,10 +38,17 @@
       ++ map (n: "podman-${n}") (lib.attrNames config.virtualisation.oci-containers.containers);
   in
   {
-    options.services.telegram-alerts.units = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [];
-      description = "Systemd units that send a Telegram alert on failure. Merged from all modules; container units are added automatically.";
+    options.services.telegram-alerts = {
+      units = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "Systemd units that send a Telegram alert on failure. Merged from all modules; container units are added automatically.";
+      };
+      chatId = lib.mkOption {
+        type = lib.types.int;
+        default = 8669496383;
+        description = "Telegram chat that receives alerts and bot traffic.";
+      };
     };
 
     config = {
