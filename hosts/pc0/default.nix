@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   imports = [
     ./hardware-configuration.nix
@@ -40,7 +40,8 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    users.l = import ./home;
+    sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
+    users.l = import ../../home/hosts/pc0.nix;
   };
 
   system.stateVersion = "26.05";

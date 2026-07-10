@@ -1,8 +1,9 @@
 { ... }:
 {
   imports = [
-    ./git.nix
-    ./ghostty.nix
+    ../ssh.nix
+    ../git.nix
+    ../ghostty.nix
   ];
 
   home.stateVersion = "26.05";
