@@ -8,7 +8,7 @@ deploy host=`uname -n`:
     if [ "{{host}}" = "$(uname -n)" ]; then
         sudo nixos-rebuild switch --flake .#{{host}}
     else
-        nix run --inputs-from . nixpkgs#nixos-rebuild -- switch --flake .#{{host}} --target-host {{host}} --build-host {{host}} --use-remote-sudo
+        nix run --inputs-from . nixpkgs#nixos-rebuild -- switch --flake .#{{host}} --target-host {{host}} --build-host {{host}} --sudo
     fi
 
 [doc("Validate the flake and all host configs without building")]
