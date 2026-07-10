@@ -11,6 +11,7 @@
       telegram-alerts.units = [ "site-webhook" ];
       uptime-page.probes = {
         website  = { url = "https://ily.rs"; order = 10; };
+        lite     = { url = "https://lite.ily.rs"; order = 15; };
         records  = { url = "https://c.ily.rs"; order = 50; };
         penfield = { url = "https://penfield.ily.rs"; order = 60; };
         x        = { url = "https://x.ily.rs"; order = 100; };
@@ -77,6 +78,7 @@
           buildCommand = "zola --config config-lite.toml build && find public \\( -name '*.png' -o -name '*.gif' -o -name '*.jpg' -o -name '*.webp' \\) -delete";
           extraBuildPackages = [ pkgs.zola ];
           caddyConfig = ''
+            import favicons
             root * /srv/website-lite/repo/public
             encode zstd gzip
 
