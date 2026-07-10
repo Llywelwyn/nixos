@@ -8,7 +8,7 @@
     ./gamemode.nix
   ];
 
-  networking.hostName = "desktop";
+  networking.hostName = "pc0";
   networking.networkmanager.enable = true;
 
   boot.loader.systemd-boot.enable = true;

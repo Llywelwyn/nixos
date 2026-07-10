@@ -18,22 +18,22 @@
   };
 
   outputs = inputs@{ nixpkgs, sops-nix, home-manager, guestbook, ... }: {
-    nixosConfigurations.lab = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.vm0 = nixpkgs.lib.nixosSystem {
       system = "aarch64-linux";
       specialArgs = { inherit inputs; };
       modules = [
         sops-nix.nixosModules.sops
         guestbook.nixosModules.default
-        ./hosts/lab
+        ./hosts/vm0
       ];
     };
 
-    nixosConfigurations.desktop = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.pc0 = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
         home-manager.nixosModules.home-manager
-        ./hosts/desktop
+        ./hosts/pc0
       ];
     };
   };

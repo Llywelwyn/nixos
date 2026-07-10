@@ -24,7 +24,7 @@
     ../../modules/uptime
   ];
 
-  networking.hostName = "lab";
+  networking.hostName = "vm0";
 
   services.openssh = {
     enable = true;
