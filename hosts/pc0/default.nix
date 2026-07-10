@@ -6,6 +6,8 @@
     ./nvidia.nix
     ./steam.nix
     ./gamemode.nix
+    ./openssh.nix
+    ./sops.nix
   ];
 
   networking.hostName = "pc0";
