@@ -9,5 +9,6 @@
       xserver.xkb.layout = "gb";
     };
     console.useXkbConfig = true;
+    security.rtkit.enable = true;
   };
 }
