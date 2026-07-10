@@ -12,7 +12,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     guestbook = {
-      url = "git+https://git.ily.rs/lew/guestbook";
+      url = "git+https://git.ily.rs/l/guestbook";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

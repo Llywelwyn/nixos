@@ -16,7 +16,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  users.users.lew = {
+  users.users.l = {
     extraGroups = [ "networkmanager" ];
     initialPassword = "nixos";
   };
@@ -40,7 +40,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    users.lew = import ./home;
+    users.l = import ./home;
   };
 
   system.stateVersion = "26.05";

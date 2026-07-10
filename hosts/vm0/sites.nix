@@ -18,7 +18,7 @@ in
     enable = true;
     domain = "ily.rs";
     redirectDomains = [ "www.ily.rs" "wynne.rs" "www.wynne.rs" "lewis.wales" "www.lewis.wales" ];
-    repo = "https://git.ily.rs/lew/website";
+    repo = "https://git.ily.rs/l/website";
     branch = "master";
     static = true;
     buildOutputDir = "public";
@@ -66,7 +66,7 @@ in
   services.site.website-lite = {
     enable = true;
     domain = "lite.ily.rs";
-    repo = "https://git.ily.rs/lew/website";
+    repo = "https://git.ily.rs/l/website";
     branch = "master";
     static = true;
     buildOutputDir = "public";
@@ -98,7 +98,7 @@ in
     enable = true;
     domain = "penfield.ily.rs";
     redirectDomains = [ "penfield.wynne.rs" ];
-    repo = "https://git.ily.rs/lew/penfield";
+    repo = "https://git.ily.rs/l/penfield";
     static = true;
     caddyConfig = ''
       import favicons
@@ -111,7 +111,7 @@ in
   services.site.record-generator = {
     enable = true;
     domain = "c.ily.rs";
-    repo = "https://git.ily.rs/lew/character-records-generator";
+    repo = "https://git.ily.rs/l/character-records-generator";
     branch = "master";
     static = true;
     buildOutputDir = "build";
@@ -121,7 +121,7 @@ in
   services.site.x = {
     enable = true;
     domain = "x.ily.rs";
-    repo = "https://git.ily.rs/lew/x";
+    repo = "https://git.ily.rs/l/x";
     static = true;
     buildOutputDir = ".";
     installCommand = "";

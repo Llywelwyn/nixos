@@ -74,11 +74,11 @@ in
     marker = "${cfg.stateDir}/.admin-bootstrapped";
   in lib.mkAfter ''
     if [ ! -e ${marker} ]; then
-      if ${adminCmd} list | grep -qE '^[0-9]+\s+lew\s'; then
-        echo "admin user 'lew' already exists, marking bootstrapped"
+      if ${adminCmd} list | grep -qE '^[0-9]+\s+l\s'; then
+        echo "admin user 'l' already exists, marking bootstrapped"
       else
         ${adminCmd} create --admin --email "l@ily.rs" \
-          --username lew --password "$(tr -d '\n' < ${pwd.path})"
+          --username l --password "$(tr -d '\n' < ${pwd.path})"
       fi
       touch ${marker}
     fi
