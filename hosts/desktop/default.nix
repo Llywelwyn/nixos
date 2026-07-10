@@ -3,6 +3,9 @@
   imports = [
     ./hardware-configuration.nix
     ../common
+    ./nvidia.nix
+    ./steam.nix
+    ./gamemode.nix
   ];
 
   networking.hostName = "desktop";
@@ -18,6 +21,10 @@
 
   nixpkgs.config.allowUnfree = true;
 
+  fonts.packages = with pkgs; [
+    nerd-fonts.jetbrains-mono
+  ];
+
   environment.systemPackages = with pkgs; [
     firefox
     claude-code
@@ -27,6 +34,12 @@
   services.displayManager.sddm.wayland.enable = true;
   services.desktopManager.plasma6.enable = true;
   services.xserver.xkb.layout = "gb";
+
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    users.lew = import ./home;
+  };
 
   system.stateVersion = "26.05";
 }
