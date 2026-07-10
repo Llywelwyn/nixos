@@ -4,6 +4,8 @@
     cfg = config.services.uptime-page;
   in
   {
+    services.telegram-alerts.units = [ "uptime" ];
+
     services.uptime-page = {
       enable = true;
       displayDays = 90;

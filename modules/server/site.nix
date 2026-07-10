@@ -190,6 +190,8 @@
         message = "services.site.${name}.preview.port is required when static = false and preview is enabled";
       }) previewCfg);
 
+      services.telegram-alerts.units = map (d: "${d.id}-rebuild") deployments;
+
       services.caddy.virtualHosts = mkMerge ((mapAttrsToList (_: site:
         {
           ${site.domain}.extraConfig =

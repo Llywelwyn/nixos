@@ -46,6 +46,12 @@
         proxy = true;
       };
 
+      telegram-alerts.units = [
+        "goatcounter"
+        "goatcounter-import-file"
+        "goatcounter-import-lite"
+        "goatcounter-import-penfield"
+      ];
       uptime-page.probes.stats = { url = "https://stats.ily.rs"; order = 110; };
 
       caddy.virtualHosts."stats.ily.rs" = {
