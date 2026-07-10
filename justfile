@@ -17,5 +17,5 @@ check:
 
 [doc("Lint nix files with statix and deadnix")]
 lint:
-    nix run nixpkgs#statix -- check .
-    nix run nixpkgs#deadnix -- .
+    nix run --inputs-from . nixpkgs#statix -- check .
+    nix run --inputs-from . nixpkgs#deadnix -- .
