@@ -1,7 +1,6 @@
 { config, inputs, ... }:
 {
   flake.nixosConfigurations.vm0 = inputs.nixpkgs.lib.nixosSystem {
-    system = "aarch64-linux";
     modules = [
       config.flake.modules.nixos.base
       config.flake.modules.nixos.server

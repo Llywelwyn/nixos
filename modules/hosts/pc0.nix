@@ -1,7 +1,6 @@
 { config, inputs, ... }:
 {
   flake.nixosConfigurations.pc0 = inputs.nixpkgs.lib.nixosSystem {
-    system = "x86_64-linux";
     modules = [
       config.flake.modules.nixos.base
       config.flake.modules.nixos.desktop
