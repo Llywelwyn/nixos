@@ -32,38 +32,8 @@
         RestartSec = 30;
       };
     };
-  in
-  {
-    sops.secrets.goatcounter_api_key = {
-      sopsFile = ../../secrets/goatcounter.yaml;
-      key = "api_key";
-    };
 
-    services = {
-      goatcounter = {
-        enable = true;
-        port = 8081;
-        proxy = true;
-      };
-
-      telegram-alerts.units = [
-        "goatcounter"
-        "goatcounter-import-file"
-        "goatcounter-import-lite"
-        "goatcounter-import-penfield"
-      ];
-      uptime-page.probes.stats = { url = "https://stats.ily.rs"; order = 110; };
-
-      caddy.virtualHosts."stats.ily.rs" = {
-        extraConfig = ''
-          import favicons
-          reverse_proxy localhost:8081
-          encode zstd gzip
-        '';
-      };
-    };
-
-    systemd.services = {
+    imports' = {
       goatcounter-import-file = mkImport "file.ily.rs" [
         ''path:re:^/file\.ily\.rs/$''
         ''path:re:^/file\.ily\.rs/(health-ping$|favicon|apple-touch-icon|robots\.txt)''
@@ -80,6 +50,33 @@
         ''path:re:^/penfield\.ily\.rs/(favicon|apple-touch-icon|robots\.txt)''
       ];
     };
+  in
+  {
+    sops.secrets.goatcounter_api_key = {
+      sopsFile = ../../secrets/goatcounter.yaml;
+      key = "api_key";
+    };
+
+    services = {
+      goatcounter = {
+        enable = true;
+        port = 8081;
+        proxy = true;
+      };
+
+      telegram-alerts.units = [ "goatcounter" ] ++ lib.attrNames imports';
+      uptime-page.probes.stats = { url = "https://stats.ily.rs"; order = 110; };
+
+      caddy.virtualHosts."stats.ily.rs" = {
+        extraConfig = ''
+          import favicons
+          reverse_proxy localhost:8081
+          encode zstd gzip
+        '';
+      };
+    };
+
+    systemd.services = imports';
 
     environment.systemPackages = [ goatcounter ];
   };
