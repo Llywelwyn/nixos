@@ -3,6 +3,11 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
+    import-tree.url = "github:vic/import-tree";
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -17,25 +22,11 @@
     };
   };
 
-  outputs = inputs@{ nixpkgs, sops-nix, home-manager, guestbook, ... }: {
-    nixosConfigurations.vm0 = nixpkgs.lib.nixosSystem {
-      system = "aarch64-linux";
-      specialArgs = { inherit inputs; };
-      modules = [
-        sops-nix.nixosModules.sops
-        guestbook.nixosModules.default
-        ./hosts/vm0
+  outputs = inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        inputs.flake-parts.flakeModules.modules
+        (inputs.import-tree ./modules)
       ];
     };
-
-    nixosConfigurations.pc0 = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      specialArgs = { inherit inputs; };
-      modules = [
-        sops-nix.nixosModules.sops
-        home-manager.nixosModules.home-manager
-        ./hosts/pc0
-      ];
-    };
-  };
 }
