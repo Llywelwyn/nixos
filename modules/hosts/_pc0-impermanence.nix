@@ -42,6 +42,7 @@
     "downloads"
     "music"
     "pictures"
+    "projects"
     "videos"
   ];
 }
