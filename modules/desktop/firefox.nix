@@ -1,14 +1,18 @@
 { inputs, ... }:
 {
-  flake.modules.homeManager.desktop = { pkgs, ... }: {
-    home.packages = [ pkgs.firefoxpwa ];
+  flake.modules.homeManager.desktop = { pkgs, ... }:
+  let
+    firefoxpwa = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.firefoxpwa;
+  in
+  {
+    home.packages = [ firefoxpwa ];
 
     xdg.configFile."mozilla/native-messaging-hosts/firefoxpwa.json".source =
-      "${pkgs.firefoxpwa}/lib/mozilla/native-messaging-hosts/firefoxpwa.json";
+      "${firefoxpwa}/lib/mozilla/native-messaging-hosts/firefoxpwa.json";
 
     programs.firefox = {
       enable = true;
-      nativeMessagingHosts = [ pkgs.firefoxpwa ];
+      nativeMessagingHosts = [ firefoxpwa ];
       profiles.default = {
         id = 0;
         extensions.packages = with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
