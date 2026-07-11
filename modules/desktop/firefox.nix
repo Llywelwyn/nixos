@@ -1,12 +1,16 @@
 { inputs, ... }:
 {
   flake.modules.homeManager.desktop = { pkgs, ... }: {
+    home.packages = [ pkgs.firefoxpwa ];
+
     programs.firefox = {
       enable = true;
+      nativeMessagingHosts = [ pkgs.firefoxpwa ];
       profiles.default = {
         id = 0;
         extensions.packages = with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
           proton-pass
+          pwas-for-firefox
           ublock-origin
         ];
         settings = {
