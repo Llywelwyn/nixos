@@ -11,6 +11,7 @@
       ffmpeg
       gh
       glow
+      jq
       python3
       ripgrep
     ];

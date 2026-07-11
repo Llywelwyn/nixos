@@ -1,8 +1,5 @@
 {
-  flake.modules.nixos.desktop = { pkgs, ... }: {
+  flake.modules.nixos.desktop = {
     nixpkgs.config.allowUnfree = true;
-    environment.systemPackages = with pkgs; [
-      claude-code
-    ];
   };
 }
