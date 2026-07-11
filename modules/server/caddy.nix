@@ -1,9 +1,10 @@
+{ config, ... }:
 {
   flake.modules.nixos.server = {
     services = {
       caddy = {
         enable = true;
-        email = "l@ily.rs";
+        email = config.flake.meta.email;
       };
       telegram-alerts.units = [ "caddy" ];
     };

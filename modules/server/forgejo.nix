@@ -1,3 +1,7 @@
+{ config, ... }:
+let
+  inherit (config.flake.meta) email;
+in
 {
   flake.modules.nixos.server = { config, lib, pkgs, ... }:
   let
@@ -80,7 +84,7 @@
         if ${adminCmd} list | grep -qE '^[0-9]+\s+l\s'; then
           echo "admin user 'l' already exists, marking bootstrapped"
         else
-          ${adminCmd} create --admin --email "l@ily.rs" \
+          ${adminCmd} create --admin --email "${email}" \
             --username l --password "$(tr -d '\n' < ${pwd.path})"
         fi
         touch ${marker}

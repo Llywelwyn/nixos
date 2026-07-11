@@ -1,3 +1,4 @@
+{ config, ... }:
 {
   flake.modules.homeManager.base = {
     programs.git = {
@@ -7,7 +8,7 @@
       settings = {
         user = {
           name = "Lewis Wynne";
-          email = "l@ily.rs";
+          email = config.flake.meta.email;
         };
         init.defaultBranch = "main";
         pull.rebase = true;
