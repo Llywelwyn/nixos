@@ -77,7 +77,7 @@
     ];
 
     xdg.configFile."tmux-sessionizer/sources.conf".text = ''
-      ~/Projects|1|1
+      ~/projects|1|1
       ~/.config|0|1
     '';
   };

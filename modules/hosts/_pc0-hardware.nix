@@ -9,9 +9,9 @@
 
   fileSystems = {
     "/" = {
-      device = "/dev/disk/by-uuid/26523e8e-e131-4f5f-bd37-4e94268dca17";
-      fsType = "btrfs";
-      options = [ "subvol=@" ];
+      device = "none";
+      fsType = "tmpfs";
+      options = [ "defaults" "size=25%" "mode=755" ];
     };
     "/home" = {
       device = "/dev/disk/by-uuid/26523e8e-e131-4f5f-bd37-4e94268dca17";
@@ -33,8 +33,7 @@
     "/data" = {
       device = "/dev/disk/by-label/data";
       fsType = "btrfs";
-      options = [ "compress=zstd" ];
-      neededForBoot = true;
+      options = [ "compress=zstd" "nofail" ];
     };
     "/boot" = {
       device = "/dev/disk/by-uuid/52A0-A4AA";
