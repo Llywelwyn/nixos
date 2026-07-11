@@ -3,6 +3,9 @@
   flake.modules.homeManager.desktop = { pkgs, ... }: {
     home.packages = [ pkgs.firefoxpwa ];
 
+    xdg.configFile."mozilla/native-messaging-hosts/firefoxpwa.json".source =
+      "${pkgs.firefoxpwa}/lib/mozilla/native-messaging-hosts/firefoxpwa.json";
+
     programs.firefox = {
       enable = true;
       nativeMessagingHosts = [ pkgs.firefoxpwa ];
