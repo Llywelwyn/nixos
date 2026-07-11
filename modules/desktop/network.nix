@@ -1,6 +1,7 @@
+{ config, ... }:
 {
   flake.modules.nixos.desktop = {
     networking.networkmanager.enable = true;
-    users.users.l.extraGroups = [ "networkmanager" ];
+    users.users.${config.flake.meta.username}.extraGroups = [ "networkmanager" ];
   };
 }

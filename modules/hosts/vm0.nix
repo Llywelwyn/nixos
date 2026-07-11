@@ -1,4 +1,7 @@
 { config, inputs, ... }:
+let
+  inherit (config.flake.meta) username;
+in
 {
   flake.nixosConfigurations.vm0 = inputs.nixpkgs.lib.nixosSystem {
     modules = [
@@ -7,7 +10,7 @@
       ./_vm0-hardware.nix
       {
         networking.hostName = "vm0";
-        home-manager.users.l.home.stateVersion = "26.05";
+        home-manager.users.${username}.home.stateVersion = "26.05";
         system.stateVersion = "23.11";
       }
     ];

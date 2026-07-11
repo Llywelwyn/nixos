@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, username, ... }:
 {
   services.openssh.hostKeys = [
     {
@@ -6,17 +6,17 @@
       path = "/persist/etc/ssh/ssh_host_ed25519_key";
     }
   ];
-  sops.age.sshKeyPaths = lib.mkForce [ "/persist/etc/ssh/ssh_host_ed25519_key" ];
+  sops.age.sshKeyPaths = lib.mkForce [ "/home/${username}/.ssh/id_ed25519" ];
 
-  sops.secrets.l-password = {
+  sops.secrets."${username}-password" = {
     sopsFile = ../../secrets/users.yaml;
     neededForUsers = true;
   };
   users = {
     mutableUsers = false;
-    users.l = {
+    users.${username} = {
       uid = 1000;
-      hashedPasswordFile = config.sops.secrets.l-password.path;
+      hashedPasswordFile = config.sops.secrets."${username}-password".path;
     };
   };
 
@@ -37,7 +37,7 @@
     files = [ "/etc/machine-id" ];
   };
 
-  systemd.tmpfiles.rules = map (d: "L /home/l/${d} - - - - /data/home/l/${d}") [
+  systemd.tmpfiles.rules = map (d: "L /home/${username}/${d} - - - - /data/home/${username}/${d}") [
     "documents"
     "downloads"
     "music"

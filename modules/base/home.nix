@@ -7,11 +7,11 @@
       useUserPackages = true;
       backupFileExtension = "hm-backup";
       sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
-      users.l.imports = [ config.flake.modules.homeManager.base ];
+      users.${config.flake.meta.username}.imports = [ config.flake.modules.homeManager.base ];
     };
   };
 
   flake.modules.nixos.desktop = {
-    home-manager.users.l.imports = [ config.flake.modules.homeManager.desktop ];
+    home-manager.users.${config.flake.meta.username}.imports = [ config.flake.modules.homeManager.desktop ];
   };
 }
