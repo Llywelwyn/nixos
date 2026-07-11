@@ -129,6 +129,7 @@
           "krunner_webshortcutsEnabled" = false;
           "locationsEnabled" = true;
           "org.kde.datetimeEnabled" = false;
+          "tmux-sessionizerEnabled" = true;
           "unitconverterEnabled" = false;
           "windowsEnabled" = false;
         };

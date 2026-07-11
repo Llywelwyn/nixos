@@ -131,12 +131,45 @@ _find_session_by_path() {
     awk -F'|' -v p="$target" '$2 == p { print $1; exit }'
 }
 
+_sanitize_name() {
+  local name
+  name=$(basename "$1" | tr -c '[:alnum:]' '_' | sed 's/^_*//;s/_*$//')
+  [[ -z "$name" ]] && name="sess_$(date +%s)"
+  printf '%s' "$name"
+}
+
+# Open from a GUI context (KRunner): no tty available
+_open() {
+  local key="$1" name tty wid
+  if [[ "$key" == SESSION:* ]]; then
+    name="${key#SESSION:}"
+  else
+    name=$(_find_session_by_path "$key")
+    if [[ -z "$name" ]]; then
+      name=$(_sanitize_name "$key")
+      tmux new-session -ds "$name" -c "$key"
+      tmux rename-window -t "$name:" "shell"
+    fi
+  fi
+  tty=$(tmux list-clients -F '#{client_activity} #{client_tty}' 2>/dev/null | sort -rn | awk 'NR==1 {print $2}' || true)
+  if [[ -n "$tty" ]]; then
+    tmux switch-client -c "$tty" -t "$name"
+    wid=$(kdotool search --class ghostty 2>/dev/null | head -n1 || true)
+    if [[ -n "$wid" ]]; then
+      kdotool windowactivate "$wid"
+    fi
+  else
+    systemd-run --user --quiet -- ghostty -e tmux attach -t "$name"
+  fi
+}
+
 # Route subcommands
 case "${1:-}" in
   --preview)        shift; _preview "$1"; exit 0 ;;
   --kill-session)   shift; _kill_session "$1"; exit 0 ;;
   --rename-session) shift; _rename_session "$1"; exit 0 ;;
   --list)           _list; exit 0 ;;
+  --open)           shift; _open "$1"; exit 0 ;;
 esac
 
 # --- Main ---
@@ -181,8 +214,7 @@ else
   selected_name=$(_find_session_by_path "$selected")
 
   if [[ -z "$selected_name" ]]; then
-    selected_name=$(basename "$selected" | tr -c '[:alnum:]' '_' | sed 's/^_*//;s/_*$//')
-    [[ -z "$selected_name" ]] && selected_name="sess_$(date +%s)"
+    selected_name=$(_sanitize_name "$selected")
 
     if [[ -z "${TMUX:-}" ]] && ! tmux list-sessions &>/dev/null; then
       if $edit_mode; then
