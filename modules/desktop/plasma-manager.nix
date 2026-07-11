@@ -42,6 +42,7 @@
           "Walk Through Windows" = [ "Alt+Tab" "Meta+Tab" ];
           "Walk Through Windows (Reverse)" = [ "Alt+Shift+Tab" "Meta+Shift+Tab" ];
         };
+        "org_kde_powerdevil"."powerProfile" = "Battery";
         plasmashell = {
           "next activity" = [ ]; # default Meta+Tab, reused for window walk
           "previous activity" = [ ];
