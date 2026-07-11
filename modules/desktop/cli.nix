@@ -9,7 +9,6 @@
       fastfetch
       fd
       ffmpeg
-      fzf
       gh
       glow
       python3
