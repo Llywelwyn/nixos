@@ -11,17 +11,10 @@ in
       inputs.impermanence.nixosModules.impermanence
       ./_pc0-hardware.nix
       ./_pc0-impermanence.nix
-      ({ config, ... }: {
+      {
         networking.hostName = "pc0";
 
-        boot.kernelParams = [ "nvidia.NVreg_TemporaryFilePath=/var/tmp" ];
-
-        services.xserver.videoDrivers = [ "nvidia" ];
-        hardware.nvidia = {
-          open = false;
-          powerManagement.enable = true;
-          package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
-        };
+        hardware.amdgpu.initrd.enable = true;
         hardware.graphics = {
           enable = true;
           enable32Bit = true;
@@ -40,7 +33,7 @@ in
 
         home-manager.users.${username}.home.stateVersion = "26.05";
         system.stateVersion = "26.05";
-      })
+      }
     ];
   };
 }
