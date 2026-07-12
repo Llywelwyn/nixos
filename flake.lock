@@ -105,11 +105,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783087729,
-        "narHash": "sha256-PnJyz6Uu91SUPc6FN51xsY5WLoYlaQdL1crfXU/Tqyw=",
+        "lastModified": 1783897034,
+        "narHash": "sha256-65/dgsylick7pZ63LzxtL3hqu/c5F1+NYKgw/eIWc7s=",
         "ref": "refs/heads/main",
-        "rev": "08c01f46b951495047b8ed453fe94596b048c7b1",
-        "revCount": 116,
+        "rev": "ff6fbb4ef2a8e24e34aab9aa63a8b4c38176e9e5",
+        "revCount": 118,
         "type": "git",
         "url": "https://git.ily.rs/l/guestbook"
       },
