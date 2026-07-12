@@ -16,11 +16,10 @@
         names = [ "main" "chat" "work" ];
       };
 
-      # niri-style: Meta+arrows move focus, Meta+Shift+arrows manipulate the window
       shortcuts = {
         kwin = {
-          "Overview" = [ ]; # default Meta+W, reassigned to close below
-          "Show Desktop" = [ ]; # default Meta+D, reassigned to vesktop below
+          "Overview" = [ ];
+          "Show Desktop" = [ ];
           "Window Close" = "Meta+W";
           "Window Maximize" = "Meta+Z";
           "Window Fullscreen" = "F11";
@@ -35,7 +34,6 @@
           "Switch to Desktop 1" = "Meta+1";
           "Switch to Desktop 2" = "Meta+2";
           "Switch to Desktop 3" = "Meta+3";
-          # both spellings: kglobalaccel may record shifted digits by symbol (GB layout)
           "Window to Desktop 1" = [ "Meta+Shift+1" "Meta+!" ];
           "Window to Desktop 2" = [ "Meta+Shift+2" "Meta+\"" ];
           "Window to Desktop 3" = [ "Meta+Shift+3" "Meta+£" ];
@@ -44,10 +42,9 @@
         };
         "org_kde_powerdevil"."powerProfile" = "Battery";
         plasmashell = {
-          "next activity" = [ ]; # default Meta+Tab, reused for window walk
+          "next activity" = [ ];
           "previous activity" = [ ];
         }
-        # default Meta+1..9, reused for desktop switching
         // lib.listToAttrs (
           map (i: lib.nameValuePair "activate task manager entry ${toString i}" [ ]) (lib.range 1 9)
         );
@@ -57,7 +54,7 @@
         launch-terminal = {
           name = "Launch Ghostty";
           key = "Meta+Return";
-          command = "ghostty"; # bash auto-attaches the default tmux session
+          command = "ghostty";
         };
         launch-browser = {
           name = "Launch Firefox";
@@ -73,6 +70,14 @@
           name = "Focus or launch Slack";
           key = "Meta+S";
           command = "focus-or-launch slack slack";
+        };
+      };
+
+      powerdevil.AC = {
+        turnOffDisplay.idleTimeout = 600;
+        autoSuspend = {
+          action = "sleep";
+          idleTimeout = 3600;
         };
       };
 
@@ -121,7 +126,7 @@
           "krunner_killEnabled" = false;
           "krunner_konsoleprofilesEnabled" = false;
           "krunner_placesrunnerEnabled" = false;
-          "krunner_powerdevilEnabled" = false;
+          "krunner_powerdevilEnabled" = true; 
           "krunner_recentdocumentsEnabled" = false;
           "krunner_sessionsEnabled" = false;
           "krunner_shellEnabled" = false;

@@ -33,6 +33,10 @@
       "/var/lib/sddm"
       "/var/lib/systemd"
       "/var/log"
+      {
+        directory = "/var/tmp";
+        mode = "1777";
+      }
     ];
     files = [ "/etc/machine-id" ];
   };

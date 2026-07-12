@@ -14,9 +14,12 @@ in
       ({ config, ... }: {
         networking.hostName = "pc0";
 
+        boot.kernelParams = [ "nvidia.NVreg_TemporaryFilePath=/var/tmp" ];
+
         services.xserver.videoDrivers = [ "nvidia" ];
         hardware.nvidia = {
           open = false;
+          powerManagement.enable = true;
           package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
         };
         hardware.graphics = {
