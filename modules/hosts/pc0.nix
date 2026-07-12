@@ -28,6 +28,10 @@ in
         };
 
         hardware.bluetooth.enable = true;
+        # Source-only. We don't want devices using this PC *as* a speaker.
+        services.pipewire.wireplumber.extraConfig."50-bluez-roles" = {
+          "monitor.bluez.properties"."bluez5.roles" = [ "a2dp_source" "hfp_ag" ];
+        };
 
         services.btrfs.autoScrub = {
           enable = true;
