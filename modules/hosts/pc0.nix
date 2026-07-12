@@ -27,6 +27,13 @@ in
           enable32Bit = true;
         };
 
+        hardware.bluetooth.enable = true;
+
+        services.btrfs.autoScrub = {
+          enable = true;
+          fileSystems = [ "/persist" "/data" ];
+        };
+
         home-manager.users.${username}.home.stateVersion = "26.05";
         system.stateVersion = "26.05";
       })
