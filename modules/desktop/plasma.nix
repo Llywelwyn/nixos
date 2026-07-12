@@ -1,5 +1,15 @@
 {
-  flake.modules.nixos.desktop = {
+  flake.modules.nixos.desktop = { pkgs, ... }: {
+    environment.plasma6.excludePackages = with pkgs.kdePackages; [
+      elisa
+      kate
+      khelpcenter
+      konsole
+      krdp
+      ktexteditor
+      plasma-browser-integration
+    ];
+
     services = {
       displayManager.sddm = {
         enable = true;
