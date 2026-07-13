@@ -42,7 +42,7 @@
           { mime = "video/webm"; regex = "^.*\\.webm$"; }
           { mime = "video/x-matroska"; regex = "^.*\\.mkv$"; }
           { mime = "application/octet-stream"; regex = "^.*\\.bin$"; }
-          { mime = "text/plain"; regex = "^.*\\.(log|txt|diff|sh|rs|toml|nix)$"; }
+          { mime = "text/plain"; regex = "^.*\\.(log|txt|diff|sh|rs|toml|nix|pub)$"; }
         ];
         mime_blacklist = [
           "application/x-dosexec"
