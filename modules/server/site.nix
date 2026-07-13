@@ -138,8 +138,6 @@
 
     webhookPort = 4323;
 
-    # Every enabled site is one "deployment" (a user, checkout, rebuild unit and
-    # optional serve unit); an enabled preview is a second one on another branch.
     deployments =
       (mapAttrsToList (name: site: {
         inherit site;
@@ -162,7 +160,7 @@
       let
         pmBin =
           if site.packageManager == "pnpm"
-          then "${pkgs.pnpm}/bin/pnpm"
+          then "${pkgs.pnpm_10}/bin/pnpm"
           else "${pkgs.nodejs}/bin/npm";
         installCmd =
           if site.installCommand != null then site.installCommand
@@ -255,7 +253,7 @@
             description = rebuildDescription;
             after = [ "network-online.target" ] ++ site.afterServices;
             path = [ pkgs.nodejs pkgs.bash ]
-              ++ optional (site.packageManager == "pnpm") pkgs.pnpm
+              ++ optional (site.packageManager == "pnpm") pkgs.pnpm_10
               ++ site.extraBuildPackages;
             environment = site.buildEnvironment;
             wants = [ "network-online.target" ];

@@ -12,6 +12,7 @@
         sshd.settings = {
           maxretry = 3;
           findtime = "15m";
+          banaction = "%(banaction_allports)s";
         };
 
         forgejo.settings = {

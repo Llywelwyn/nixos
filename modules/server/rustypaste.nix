@@ -61,7 +61,7 @@
       set -u
       token=$(tr -d '\n' < ${config.sops.secrets.rustypaste-telegram-token.path})
 
-      send() { # $1: text, $2: "preview" to keep the link preview
+      send() {
         preview=true
         [ "''${2:-}" = "preview" ] && preview=false
         ${pkgs.curl}/bin/curl -fsS --max-time 10 \
@@ -135,7 +135,7 @@
       pins="/srv/rustypaste/pins/pins.json"
       offset=$(cat "$offset_file" 2>/dev/null || echo 0)
 
-      reply() { # $1: message_id to reply to, $2: text
+      reply() {
         ${pkgs.curl}/bin/curl -fsS --max-time 10 \
           -X POST "$api/sendMessage" \
           --data-urlencode "chat_id=${chatId}" \
@@ -151,7 +151,7 @@
         done
       }
 
-      unpin_entry() { # $1: file name; succeeds only if it was pinned
+      unpin_entry() {
         [ -f "$pins" ] || return 1
         ${pkgs.jq}/bin/jq -e --arg n "$1" 'any(.[]; .name == $n)' "$pins" >/dev/null || return 1
         updated=$(${pkgs.jq}/bin/jq --arg n "$1" 'map(select(.name != $n))' "$pins") \

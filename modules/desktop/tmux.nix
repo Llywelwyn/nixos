@@ -46,7 +46,7 @@
         bind-key   -n  M-w                 confirm-before  -p "are you sure you want to kill #P?" kill-pane
 
         set-option -g  prefix              `                  # "
-        set-option -g  default-terminal    "xterm"            # 256-colors
+        set-option -g  default-terminal    "tmux-256color"    # 256-colors
         set-option -s  extended-keys       on
         set-option -as terminal-features   "xterm*:extkeys"
         set-option -s  escape-time         0                  # vi-mode switch delay

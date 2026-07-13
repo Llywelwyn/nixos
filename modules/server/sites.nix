@@ -1,6 +1,3 @@
-# Options are documented in modules/server/site.nix. Each site gets a CD webhook at
-# http://localhost:4323/hooks/<name>-rebuild (preview: <name>-preview-rebuild);
-# point a Forgejo push webhook at it.
 {
   flake.modules.nixos.server = { config, pkgs, ... }:
   let

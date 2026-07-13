@@ -13,7 +13,10 @@
     };
   };
 
-  environment.persistence."/persist".directories = [ "/var/lib/tcz-mongo" ];
+  environment.persistence."/persist".directories = [
+    "/var/lib/containers"
+    "/var/lib/tcz-mongo"
+  ];
 
   environment.systemPackages = with pkgs; [
     mongosh

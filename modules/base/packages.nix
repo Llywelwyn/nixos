@@ -10,6 +10,7 @@
       sops
       just
       htop
+      nvd
     ];
   };
 }
