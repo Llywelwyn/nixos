@@ -11,6 +11,7 @@ in
       inputs.impermanence.nixosModules.impermanence
       ./_pc0-hardware.nix
       ./_pc0-impermanence.nix
+      ./_pc0-tcz-mongo.nix
       {
         networking.hostName = "pc0";
 
