@@ -6,7 +6,14 @@
       path = "/persist/etc/ssh/ssh_host_ed25519_key";
     }
   ];
-  sops.age.sshKeyPaths = lib.mkForce [ "/home/${username}/.ssh/id_ed25519" ];
+  sops.age = {
+    sshKeyPaths = lib.mkForce [ ];
+    keyFile = "/home/${username}/.config/sops/age/keys.txt";
+  };
+  home-manager.users.${username}.sops.age = {
+    sshKeyPaths = lib.mkForce [ ];
+    keyFile = "/home/${username}/.config/sops/age/keys.txt";
+  };
 
   sops.secrets."${username}-password" = {
     sopsFile = ../../secrets/users.yaml;

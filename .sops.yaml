@@ -1,6 +1,6 @@
 keys:
   - &vm0 age1r8h6gy2f4mu8xvx609qeadl82v2hua74xaevsp982zyfh4tm9qlsu80s0f
-  - &pc0 age1runrk8wl4c60kfadka3ryhpewjv760xywpxmu4kyef45dmljepyq4tncja
+  - &pc0 age1qzvkmaxq525zzmwpp0d70rg8euztc2du6525wks72568k8lhzfrs7szz26
   - &pc1 age1nq4z2ms4vruhces2f8e7tvgsr0pfg5ha92w0hrmde3n2ulxe4qhqxv05xl
 creation_rules:
   - path_regex: secrets/.*\.yaml$
