@@ -8,10 +8,10 @@ in
     modules = [
       config.flake.modules.nixos.base
       config.flake.modules.nixos.desktop
+      config.flake.modules.nixos.tcz
       inputs.impermanence.nixosModules.impermanence
       ./_pc0-hardware.nix
       ./_pc0-impermanence.nix
-      ./_pc0-tcz-mongo.nix
       {
         networking.hostName = "pc0";
 

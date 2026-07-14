@@ -4,7 +4,6 @@
 
     home.packages = with pkgs; [
       bat
-      dotnet-sdk
       eza
       fastfetch
       fd
