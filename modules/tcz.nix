@@ -1,12 +1,15 @@
-{ config, ... }:
+{ config, inputs, ... }:
 {
-  flake.modules.homeManager.tcz = { pkgs, ... }: {
-    home.packages = with pkgs; [
+  flake.modules.homeManager.tcz = { pkgs, ... }:
+  let
+    lessc = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.lessc;
+  in
+  {
+    home.packages = (with pkgs; [
       dart-sass
       dotnet-sdk_9
-      lessc
       nodejs
-    ];
+    ]) ++ [ lessc ];
   };
 
   flake.modules.nixos.tcz = { pkgs, ... }: {

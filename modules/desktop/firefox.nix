@@ -7,8 +7,21 @@
   {
     home.packages = [ firefoxpwa ];
 
-    xdg.configFile."mozilla/native-messaging-hosts/firefoxpwa.json".source =
-      "${firefoxpwa}/lib/mozilla/native-messaging-hosts/firefoxpwa.json";
+    xdg = {
+      configFile."mozilla/native-messaging-hosts/firefoxpwa.json".source =
+        "${firefoxpwa}/lib/mozilla/native-messaging-hosts/firefoxpwa.json";
+      configFile."mimeapps.list".force = true;
+      mimeApps = {
+        enable = true;
+        defaultApplications = {
+          "text/html" = "firefox.desktop";
+          "x-scheme-handler/http" = "firefox.desktop";
+          "x-scheme-handler/https" = "firefox.desktop";
+          "x-scheme-handler/about" = "firefox.desktop";
+          "x-scheme-handler/unknown" = "firefox.desktop";
+        };
+      };
+    };
 
     programs.firefox = {
       enable = true;
