@@ -10,6 +10,7 @@
           name = "Lewis Wynne";
           email = config.flake.meta.email;
         };
+        core.checkStat = "minimal";
         init.defaultBranch = "main";
         url."ssh://forgejo@git.ily.rs:4201/".insteadOf = "https://git.ily.rs/";
         url."ssh://git@github.com/".insteadOf = "https://github.com/";
