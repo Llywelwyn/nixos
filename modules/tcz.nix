@@ -9,6 +9,7 @@
       dart-sass
       dotnet-sdk_9
       nodejs
+      stripe-cli
     ]) ++ [ lessc ];
   };
 
