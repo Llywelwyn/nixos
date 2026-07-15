@@ -12,6 +12,11 @@
           lsa = "ls -a";
           lt = "eza --tree --level=2 --long --icons --git";
           lta = "lt -a";
+
+          ".." = "cd ..";
+          "..." = "cd ../..";
+          "...." = "cd ../../..";
+          "....." = "cd ../../../..";
         };
 
         # order 3000: attach last, after zoxide/fzf init (zoxide uses mkOrder 2000)
