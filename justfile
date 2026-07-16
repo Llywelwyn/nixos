@@ -3,7 +3,7 @@ default:
     @just --list
 
 [doc("Deploy a host: locally if it matches this machine, otherwise over ssh")]
-deploy host=`uname -n`: update
+deploy host=`uname -n`:
     #!/usr/bin/env bash
     set -euo pipefail
     if [ "{{host}}" = "$(uname -n)" ]; then
