@@ -7,6 +7,11 @@
         theme = "auto";
         model = "claude-fable-5[1m]";
         includeCoAuthoredBy = false;
+        attribution = {
+          commit = "";
+          pr = "";
+          sessionUrl = false;
+        };
         statusLine = {
           type = "command";
           command = ''
