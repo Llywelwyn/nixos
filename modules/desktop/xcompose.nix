@@ -1,5 +1,7 @@
 { config, ... }:
 {
+  flake.modules.nixos.desktop.environment.sessionVariables.GTK_IM_MODULE = "simple";
+
   flake.modules.homeManager.desktop = {
     programs.plasma.input.keyboard.options = [ "compose:caps" ];
 
