@@ -117,7 +117,7 @@
         kwinrc = {
           TabBox.DesktopMode = 1;
           "org.kde.kdecoration2" = {
-            BorderSize = "Tiny";
+            BorderSize = "None";
             BorderSizeAuto = false;
           };
         };
