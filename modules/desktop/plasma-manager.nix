@@ -114,7 +114,20 @@
       ];
 
       configFile = {
-        kwinrc.TabBox.DesktopMode = 1;
+        kwinrc = {
+          TabBox.DesktopMode = 1;
+          "org.kde.kdecoration2" = {
+            BorderSize = "Tiny";
+            BorderSizeAuto = false;
+          };
+        };
+        breezerc."Windeco Exception 0" = {
+          Enabled = true;
+          ExceptionType = 0;
+          ExceptionPattern = ".*";
+          HideTitleBar = true;
+          Mask = 0;
+        };
         krunnerrc.Plugins = {
           "baloosearchEnabled" = false;
           "bookmarksEnabled" = true;
