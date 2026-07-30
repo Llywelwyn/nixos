@@ -13,6 +13,7 @@
       jq
       python3
       ripgrep
+      zola
     ];
   };
 }
