@@ -3,6 +3,8 @@
   flake.modules.homeManager.desktop = { pkgs, lib, ... }: {
     imports = [ inputs.plasma-manager.homeModules.plasma-manager ];
 
+    xdg.mimeApps.defaultApplications."inode/directory" = "org.kde.dolphin.desktop";
+
     home.packages = [
       pkgs.kdotool
       (pkgs.writeShellScriptBin "focus-or-launch" (builtins.readFile ./_scripts/focus-or-launch))
@@ -31,6 +33,9 @@
           "Window Quick Tile Right" = "Meta+Shift+Right";
           "Window Quick Tile Top" = "Meta+Shift+Up";
           "Window Quick Tile Bottom" = "Meta+Shift+Down";
+          "Window Above Other Windows" = "Meta+A";
+          "Window to Next Screen" = "Meta+Ctrl+Right";
+          "Window to Previous Screen" = "Meta+Ctrl+Left";
           "Switch to Desktop 1" = "Meta+1";
           "Switch to Desktop 2" = "Meta+2";
           "Switch to Desktop 3" = "Meta+3";
@@ -89,6 +94,23 @@
       };
 
       window-rules = [
+        {
+          description = "firefox pip: above everything, on all desktops";
+          match.title = {
+            value = "Picture-in-Picture";
+            type = "exact";
+          };
+          apply = {
+            layer = {
+              value = "osd";
+              apply = "force";
+            };
+            desktops = {
+              value = "";
+              apply = "force";
+            };
+          };
+        }
         {
           description = "chat apps open on the chat desktop";
           match.window-class = {
