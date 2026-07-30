@@ -21,6 +21,8 @@
       backend = "podman";
       containers.tcz-mongo = {
         image = "docker.io/library/mongo:7";
+        autoStart = false;
+        extraOptions = [ "--memory=2g" ];
         ports = [ "127.0.0.1:27017:27017" ];
         volumes = [
           "/var/lib/tcz-mongo/db:/data/db"
