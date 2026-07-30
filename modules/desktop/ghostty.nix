@@ -1,5 +1,13 @@
 {
   flake.modules.homeManager.desktop = {
+    xdg.mimeApps.defaultApplications."x-scheme-handler/terminal" =
+      "com.mitchellh.ghostty.desktop";
+
+    programs.plasma.configFile.kdeglobals.General = {
+      TerminalApplication = "ghostty";
+      TerminalService = "com.mitchellh.ghostty.desktop";
+    };
+
     programs.ghostty = {
       enable = true;
       settings = {
