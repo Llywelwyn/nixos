@@ -15,6 +15,9 @@ in
       {
         networking.hostName = "pc0";
 
+        # 0x20000 = DC_DISABLE_SUBVP_FAMS; its phantom-plane path NULL-derefs
+        boot.kernelParams = [ "amdgpu.dcdebugmask=0x20000" ];
+
         hardware = {
           amdgpu.initrd.enable = true;
           graphics = {
