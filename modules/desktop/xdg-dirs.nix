@@ -11,7 +11,7 @@
       publicShare = "${config.home.homeDirectory}/public";
       templates = "${config.home.homeDirectory}/templates";
       videos = "${config.home.homeDirectory}/videos";
-      extraConfig.XDG_PROJECTS_DIR = "${config.home.homeDirectory}/projects";
+      projects = "${config.home.homeDirectory}/projects";
     };
   };
 }
