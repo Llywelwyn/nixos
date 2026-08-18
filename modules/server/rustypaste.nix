@@ -71,6 +71,14 @@
           --data-urlencode "disable_web_page_preview=$preview" >/dev/null || true
       }
 
+      send_media() {
+        ${pkgs.curl}/bin/curl -fsS --max-time 60 \
+          -X POST "https://api.telegram.org/bot$token/$1" \
+          -F "chat_id=${chatId}" \
+          -F "caption=$3" \
+          -F "$2=@$4" >/dev/null
+      }
+
       ${pkgs.inotify-tools}/bin/inotifywait -m -q -r \
         -e close_write -e moved_to \
         --format '%w%f' /srv/rustypaste/upload \
@@ -101,7 +109,8 @@
       → $target"
               ;;
             *)
-              case "$path" in */oneshot/*) extra=" [one-shot]$extra" ;; esac
+              oneshot=""
+              case "$path" in */oneshot/*) extra=" [one-shot]$extra"; oneshot=1 ;; esac
               mime=$(${pkgs.file}/bin/file --brief --mime-type "$path" 2>/dev/null || echo unknown)
               bytes=$(stat -c %s "$path" 2>/dev/null || echo 0)
               size=$(${pkgs.coreutils}/bin/numfmt --to=iec --suffix=B "$bytes" 2>/dev/null || echo "$bytes")
@@ -115,7 +124,14 @@
       $snippet"
                   ;;
                 image/*)
-                  send "🖼 New upload on file.ily.rs: $url$extra ($mime, $size)" preview
+                  msg="🖼 New upload on file.ily.rs: $url$extra ($mime, $size)"
+                  if [ -n "$oneshot" ]; then
+                    send_media sendPhoto photo "$msg" "$path" \
+                      || send_media sendDocument document "$msg" "$path" \
+                      || send "$msg"
+                  else
+                    send "$msg" preview
+                  fi
                   ;;
                 *)
                   send "📎 New upload on file.ily.rs: $url$extra ($mime, $size)"
@@ -178,7 +194,7 @@
             *) continue ;;
           esac
           msgid=$(${pkgs.jq}/bin/jq -r '.message.message_id' <<<"$u")
-          orig=$(${pkgs.jq}/bin/jq -r '.message.reply_to_message.text // empty' <<<"$u")
+          orig=$(${pkgs.jq}/bin/jq -r '.message.reply_to_message | (.text // .caption // empty)' <<<"$u")
           name=$(grep -oE 'https://file\.ily\.rs/[A-Za-z0-9._-]+' <<<"$orig" \
             | head -1 | sed 's|.*/||')
           if [ -z "$name" ]; then
