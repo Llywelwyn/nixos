@@ -15,6 +15,7 @@
         remotePlay.openFirewall = true;
       };
       programs.gamemode.enable = true;
+      programs.nix-ld.enable = true;
       hardware.xpadneo.enable = true;
       users.users.${config.flake.meta.username}.extraGroups = [ "gamemode" ];
       environment.systemPackages = [ creamlinux ];
