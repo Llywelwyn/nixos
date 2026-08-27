@@ -5,7 +5,10 @@
       settings = {
         tui = "fullscreen";
         theme = "auto";
-        model = "claude-fable-5[1m]";
+        model = "claude-fable-5";
+        voice = {
+          enabled = true;
+        };
         includeCoAuthoredBy = false;
         attribution = {
           commit = "";
