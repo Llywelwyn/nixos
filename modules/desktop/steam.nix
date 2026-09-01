@@ -22,4 +22,8 @@
       users.users.${config.flake.meta.username}.extraGroups = [ "gamemode" ];
       environment.systemPackages = [ creamlinux ];
     };
+
+  flake.modules.homeManager.desktop = { pkgs, ... }: {
+    xdg.dataFile."Steam/compatibilitytools.d/GE-Proton".source = pkgs.proton-ge-bin.steamcompattool;
+  };
 }
