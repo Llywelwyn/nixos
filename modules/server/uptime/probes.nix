@@ -21,17 +21,6 @@
         intervalSeconds = 60;
         order = 1;
       };
-      categories.external = {
-        description = "Other services";
-        intervalSeconds = 300;
-        hideUrls = true;
-        order = 2;
-      };
-
-      probes = {
-        co-surf   = { url = "https://co-surf.com"; category = "external"; };
-        frontline = { url = "https://essexfrontline.org.uk"; category = "external"; };
-      };
     };
   };
 }

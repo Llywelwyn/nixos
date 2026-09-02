@@ -11,7 +11,6 @@
         lite     = { url = "https://lite.ily.rs"; order = 15; };
         records  = { url = "https://c.ily.rs"; order = 50; };
         penfield = { url = "https://penfield.ily.rs"; order = 60; };
-        x        = { url = "https://x.ily.rs"; order = 100; };
       };
 
       site = {
@@ -120,15 +119,6 @@
           packageManager = "npm";
         };
 
-        x = {
-          enable = true;
-          domain = "x.ily.rs";
-          repo = "https://git.ily.rs/l/x";
-          static = true;
-          buildOutputDir = ".";
-          installCommand = "";
-          buildCommand = "";
-        };
       };
     };
   };

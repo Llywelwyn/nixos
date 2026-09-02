@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}}</title>
   <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="https://cdn.ily.rs/mascot.css">
   <link rel="icon" href="/favicon.png">
   <style>
     .guestbook-summary {
@@ -17,10 +16,6 @@
 
     .guestbook-summary::-webkit-details-marker {
       display: none;
-    }
-
-    .guestbook-summary:hover {
-      color: var(--muted);
     }
 
     .guestbook-details {
@@ -159,10 +154,6 @@
       column-gap: 1ch;
     }
 
-    .entry-date {
-      color: var(--muted);
-    }
-
     .entry-body {
       white-space: pre-wrap;
     }
@@ -179,10 +170,12 @@
 </head>
 <body>
   <nav>
-    <a href="/">Home</a><br>
-    <a href="/links/">Links</a><br>
-    <a href="/now/">Now</a><br>
-    <a href="/guestbook/">Guestbook</a>
+    <a href="/">Home</a>&nbsp;
+    <a href="/links/">Links</a>&nbsp;
+    <a href="/now/">Now</a>&nbsp;
+    <a href="/guestbook/">Guestbook</a>&nbsp;
+    <a href="mailto:l@ily.rs">Email</a>&nbsp;
+    <a href="/rss.xml">RSS</a>
   </nav>
   <h1>Guestbook</h1>
   <details class="guestbook-details">
