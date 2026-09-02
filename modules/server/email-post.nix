@@ -90,6 +90,84 @@ in
             })
 
 
+        def delete_now(needle):
+            current = api("GET", "/contents/content/now.md?ref=" + branch)
+            content = base64.b64decode(current["content"]).decode()
+            blocks = list(re.finditer(
+                r"\{% update\(date=\"[^\"]*\"\) %\}\n(.*?)\n\{% end %\}\n*",
+                content,
+                flags=re.S,
+            ))
+            if not blocks:
+                raise RuntimeError("no now updates to delete")
+            target = blocks[0]
+            if needle:
+                matching = [
+                    b for b in blocks if needle.lower() in b.group(1).lower()
+                ]
+                if not matching:
+                    raise RuntimeError("no now update matching the email body")
+                target = matching[0]
+            content = content[: target.start()] + content[target.end() :]
+            api("PUT", "/contents/content/now.md", {
+                "branch": branch,
+                "sha": current["sha"],
+                "message": "now: delete update via email",
+                "content": base64.b64encode(content.encode()).decode(),
+            })
+            summary = re.sub(r"\s+", " ", target.group(1)).strip()
+            return summary[:60] + ("..." if len(summary) > 60 else "")
+
+
+        def delete_blog(slug):
+            path = "/contents/content/blog/" + slug + ".md"
+            current = api("GET", path + "?ref=" + branch)
+            api("DELETE", path, {
+                "branch": branch,
+                "sha": current["sha"],
+                "message": "blog: delete " + slug + " (via email)",
+            })
+
+
+        def delete_bookmark(url):
+            def norm(u):
+                return re.sub(r"^https?://", "", u, flags=re.I).rstrip("/").lower()
+
+            current = api("GET", "/contents/content/links.md?ref=" + branch)
+            content = base64.b64decode(current["content"]).decode()
+            kept = []
+            removed = 0
+            for line in content.splitlines():
+                m = re.search(r'<a href="([^"]+)"', line)
+                if m and norm(m.group(1)) == norm(url):
+                    removed += 1
+                else:
+                    kept.append(line)
+            if not removed:
+                raise RuntimeError("no bookmark matching " + url)
+            api("PUT", "/contents/content/links.md", {
+                "branch": branch,
+                "sha": current["sha"],
+                "message": "links: delete " + norm(url),
+                "content": base64.b64encode(("\n".join(kept) + "\n").encode()).decode(),
+            })
+
+
+        def publish_draft(slug):
+            path = "/contents/content/blog/" + slug + ".md"
+            current = api("GET", path + "?ref=" + branch)
+            content = base64.b64decode(current["content"]).decode()
+            if "\ndraft = true\n" not in content:
+                raise RuntimeError(slug + " is not a draft")
+            content = content.replace("\ndraft = true\n", "\n", 1)
+            api("PUT", path, {
+                "branch": branch,
+                "sha": current["sha"],
+                "message": "blog: publish " + slug + " (via email)",
+                "content": base64.b64encode(content.encode()).decode(),
+            })
+
+
         def publish_bookmark(url, text):
             current = api("GET", "/contents/content/links.md?ref=" + branch)
             content = base64.b64decode(current["content"]).decode()
@@ -148,9 +226,30 @@ in
                 return "rejected", "sender not allowed: " + ", ".join(senders)
             subject = re.sub(r"\s+", " ", str(msg["subject"] or "")).strip()
             text = body_text(msg)
+            when = message_date(msg)
+            command = re.fullmatch(
+                r"(delete|publish)\s*(?::\s*(.*))?", subject, flags=re.I
+            )
+            if command:
+                verb = command.group(1).lower()
+                arg = (command.group(2) or "").strip()
+                if verb == "delete":
+                    if arg.lower() in ("", "now"):
+                        removed = delete_now(text)
+                        return "done", "deleted now update: " + removed
+                    if re.fullmatch(r"https?://\S+", arg, flags=re.I):
+                        delete_bookmark(arg)
+                        return "done", "deleted bookmark " + arg
+                    slug = slugify(arg)
+                    delete_blog(slug)
+                    return "done", "deleted blog post " + slug
+                if not arg:
+                    return "failed", "publish needs a post title or slug"
+                slug = slugify(arg)
+                publish_draft(slug)
+                return "done", "published " + slug
             if not text:
                 return "failed", "no plain-text body"
-            when = message_date(msg)
             if subject.lower() in ("", "now"):
                 publish_now(text, when)
                 return "done", "now update"
