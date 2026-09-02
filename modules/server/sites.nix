@@ -17,7 +17,7 @@
         website = {
           enable = true;
           domain = "ily.rs";
-          redirectDomains = [ "www.ily.rs" "wynne.rs" "www.wynne.rs" "lewis.wales" "www.lewis.wales" ];
+          redirectDomains = [ "www.ily.rs" "lewis.wales" "www.lewis.wales" ];
           repo = "https://git.ily.rs/l/website";
           branch = "master";
           static = true;
