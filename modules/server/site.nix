@@ -106,7 +106,7 @@
 
         afterServices = mkOption {
           type = types.listOf types.str;
-          default = [ "forgejo.service" ];
+          default = [ "forgejo.service" "caddy.service" ];
           description = "Systemd units to wait for before building.";
         };
 
