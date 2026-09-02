@@ -173,7 +173,13 @@ in
             content = base64.b64decode(current["content"]).decode()
             display = re.sub(r"^https?://", "", url, flags=re.I).rstrip("/")
             line = '<a href="' + url + '">' + display + "</a> - " + text + "<br>"
-            content = content.rstrip("\n") + "\n" + line + "\n"
+            lines = content.rstrip("\n").splitlines()
+            index = next(
+                (i for i, existing in enumerate(lines) if '<a href="' in existing),
+                len(lines),
+            )
+            lines.insert(index, line)
+            content = "\n".join(lines) + "\n"
             api("PUT", "/contents/content/links.md", {
                 "branch": branch,
                 "sha": current["sha"],
