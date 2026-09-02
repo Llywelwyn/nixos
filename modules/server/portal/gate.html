@@ -9,8 +9,12 @@
   :root { color-scheme: light; }
   body { margin: 0; height: 100dvh; display: flex; align-items: center; justify-content: center; background: #fff; }
   form { display: flex; gap: 0.75rem; }
-  input { width: 3rem; height: 3.75rem; border: 1px solid #000; border-radius: 0; background: #fff; color: #000; font-size: 1.5rem; font-family: inherit; text-align: center; }
-  input:focus { outline: 2px solid #000; outline-offset: -2px; }
+  input { width: 3rem; height: 3.75rem; border: 1px solid #bbb; border-radius: 0.5rem; background: #fff; color: #000; font-size: 1.5rem; font-family: inherit; text-align: center; }
+  input:focus { outline: 2px solid #888; outline-offset: -2px; }
+  input.bounce { animation: bounce 0.25s ease; }
+  @keyframes bounce {
+    30% { transform: translateY(-0.4rem); }
+  }
 </style>
 </head>
 <body>
@@ -26,7 +30,13 @@
     box.addEventListener("input", () => {
       const digits = box.value.replace(/\D/g, "");
       box.value = "";
-      digits.slice(0, 4 - i).split("").forEach((d, j) => boxes[i + j].value = d);
+      digits.slice(0, 4 - i).split("").forEach((d, j) => {
+        const b = boxes[i + j];
+        b.value = d;
+        b.classList.remove("bounce");
+        void b.offsetWidth;
+        b.classList.add("bounce");
+      });
       boxes[Math.min(i + Math.max(digits.length, 1), 3)].focus();
       if (boxes.every(b => b.value)) {
         document.cookie = "pin=" + boxes.map(b => b.value).join("") + "; max-age=31536000; path=/; secure; samesite=lax";
