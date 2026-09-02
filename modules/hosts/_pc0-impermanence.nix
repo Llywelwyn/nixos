@@ -47,13 +47,4 @@
     ];
     files = [ "/etc/machine-id" ];
   };
-
-  systemd.tmpfiles.rules = map (d: "L /home/${username}/${d} - - - - /data/home/${username}/${d}") [
-    "documents"
-    "downloads"
-    "music"
-    "pictures"
-    "projects"
-    "videos"
-  ];
 }

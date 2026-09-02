@@ -16,7 +16,7 @@
     "/home" = {
       device = "/dev/disk/by-uuid/26523e8e-e131-4f5f-bd37-4e94268dca17";
       fsType = "btrfs";
-      options = [ "subvol=@home" ];
+      options = [ "subvol=@home" "compress=zstd" ];
       neededForBoot = true;
     };
     "/nix" = {
