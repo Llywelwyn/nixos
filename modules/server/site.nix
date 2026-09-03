@@ -109,52 +109,20 @@
           default = [ "forgejo.service" "caddy.service" ];
           description = "Systemd units to wait for before building.";
         };
-
-        preview = {
-          enable = lib.mkEnableOption "TinyAuth-protected preview of this site";
-
-          branch = mkOption {
-            type = types.str;
-            default = "develop";
-          };
-
-          domain = mkOption {
-            type = types.str;
-            default = "0${name}.ily.rs";
-            description = "Preview domain. Defaults to 0<name>.ily.rs.";
-          };
-
-          port = mkOption {
-            type = types.nullOr types.port;
-            default = null;
-            description = "Port for preview Node.js server. Required when parent static = false.";
-          };
-        };
       };
     });
 
     cfg = lib.filterAttrs (_: site: site.enable) config.services.site;
-    previewCfg = lib.filterAttrs (_: site: site.enable && site.preview.enable) config.services.site;
 
     webhookPort = 4323;
 
-    deployments =
-      (mapAttrsToList (name: site: {
-        inherit site;
-        id = name;
-        inherit (site) branch dataDir port;
-        rebuildDescription = "Clone/pull and build ${site.domain}";
-        serveDescription = site.domain;
-      }) cfg)
-      ++ (mapAttrsToList (name: site: {
-        inherit site;
-        id = "${name}-preview";
-        branch = site.preview.branch;
-        dataDir = "/srv/${name}-preview";
-        port = site.preview.port;
-        rebuildDescription = "Clone/pull and build preview of ${site.domain}";
-        serveDescription = "Preview of ${site.domain}";
-      }) previewCfg);
+    deployments = mapAttrsToList (name: site: {
+      inherit site;
+      id = name;
+      inherit (site) branch dataDir port;
+      rebuildDescription = "Clone/pull and build ${site.domain}";
+      serveDescription = site.domain;
+    }) cfg;
 
     siteCommands = site:
       let
@@ -180,17 +148,14 @@
     };
 
     config = {
-      assertions = (mapAttrsToList (name: site: {
+      assertions = mapAttrsToList (name: site: {
         assertion = site.static || site.port != null;
         message = "services.site.${name}.port is required when static = false";
-      }) cfg) ++ (mapAttrsToList (name: site: {
-        assertion = site.static || site.preview.port != null;
-        message = "services.site.${name}.preview.port is required when static = false and preview is enabled";
-      }) previewCfg);
+      }) cfg;
 
       services.telegram-alerts.units = map (d: "${d.id}-rebuild") deployments;
 
-      services.caddy.virtualHosts = mkMerge ((mapAttrsToList (_: site:
+      services.caddy.virtualHosts = mkMerge (mapAttrsToList (_: site:
         {
           ${site.domain}.extraConfig =
             if site.caddyConfig != null then site.caddyConfig
@@ -213,39 +178,7 @@
             redir https://${site.domain}{uri} permanent
           '';
         }) site.redirectDomains)
-      ) cfg) ++ (mapAttrsToList (name: site:
-        let previewDataDir = "/srv/${name}-preview"; in {
-          ${site.preview.domain}.extraConfig = if site.static then ''
-            import favicons
-
-            @health path /health-ping
-            handle @health {
-              respond 200
-            }
-            handle {
-              import tinyauth
-              root * ${previewDataDir}/repo/${site.buildOutputDir}
-              encode zstd gzip
-              try_files {path} /index.html
-              file_server {
-                hide .git
-              }
-            }
-          '' else ''
-            import favicons
-
-            @health path /health-ping
-            handle @health {
-              respond 200
-            }
-            handle {
-              import tinyauth
-              reverse_proxy localhost:${toString site.preview.port}
-              encode zstd gzip
-            }
-          '';
-        }
-      ) previewCfg));
+      ) cfg);
 
       systemd.services = mkMerge ((map ({ site, id, branch, dataDir, port, rebuildDescription, serveDescription }:
         let c = siteCommands site; in {
