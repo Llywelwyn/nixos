@@ -38,10 +38,8 @@
         foldmethod = "indent";
         foldnestmax = 10;
         foldtext = "";
-        autoindent = true;
         expandtab = true;
         ignorecase = true;
-        incsearch = true;
         infercase = true;
         smartcase = true;
         smartindent = true;
