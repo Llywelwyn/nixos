@@ -1,15 +1,10 @@
 { inputs, ... }:
 {
   flake.modules.homeManager.desktop = { pkgs, ... }:
-  let
-    firefoxpwa = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.firefoxpwa;
-  in
   {
-    home.packages = [ firefoxpwa ];
+    home.packages = [ pkgs.firefoxpwa ];
 
     xdg = {
-      configFile."mozilla/native-messaging-hosts/firefoxpwa.json".source =
-        "${firefoxpwa}/lib/mozilla/native-messaging-hosts/firefoxpwa.json";
       configFile."mimeapps.list".force = true;
       mimeApps = {
         enable = true;
@@ -25,7 +20,7 @@
 
     programs.firefox = {
       enable = true;
-      nativeMessagingHosts = [ firefoxpwa ];
+      nativeMessagingHosts = [ pkgs.firefoxpwa ];
       profiles.default = {
         id = 0;
         extensions.packages = with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
