@@ -17,7 +17,6 @@
     };
 
     homeManager.desktop = { config, ... }: {
-      sops.age.sshKeyPaths = [ "${config.home.homeDirectory}/.ssh/id_ed25519" ];
       sops.secrets.ssh_config = {
         sopsFile = ../../secrets/ssh.yaml;
         path = "${config.home.homeDirectory}/.ssh/config";

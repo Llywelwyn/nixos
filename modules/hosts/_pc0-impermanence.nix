@@ -10,10 +10,7 @@
     sshKeyPaths = lib.mkForce [ ];
     keyFile = "/home/${username}/.config/sops/age/keys.txt";
   };
-  home-manager.users.${username}.sops.age = {
-    sshKeyPaths = lib.mkForce [ ];
-    keyFile = "/home/${username}/.config/sops/age/keys.txt";
-  };
+  home-manager.users.${username}.sops.age.keyFile = "/home/${username}/.config/sops/age/keys.txt";
 
   sops.secrets."${username}-password" = {
     sopsFile = ../../secrets/users.yaml;
