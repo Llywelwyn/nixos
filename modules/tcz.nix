@@ -1,20 +1,13 @@
-{ config, inputs, ... }:
+{ config, ... }:
 {
-  flake.modules.homeManager.tcz = { pkgs, ... }:
-  let
-    lessc = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.lessc;
-  in
-  {
-    home.packages = (with pkgs; [
+  flake.modules.nixos.tcz = { pkgs, ... }: {
+    home-manager.users.${config.flake.meta.username}.home.packages = with pkgs; [
       dart-sass
       dotnet-sdk_9
+      lessc
       nodejs
       stripe-cli
-    ]) ++ [ lessc ];
-  };
-
-  flake.modules.nixos.tcz = { pkgs, ... }: {
-    home-manager.users.${config.flake.meta.username}.imports = [ config.flake.modules.homeManager.tcz ];
+    ];
 
     virtualisation.podman.enable = true;
     virtualisation.oci-containers = {
