@@ -167,11 +167,7 @@
               file_server {
                 hide .git
               }
-            '' else ''
-              import favicons
-              reverse_proxy localhost:${toString site.port}
-              encode zstd gzip
-            '';
+            '' else "import proxy ${toString site.port}";
         } // builtins.listToAttrs (map (d: {
           name = d;
           value.extraConfig = ''

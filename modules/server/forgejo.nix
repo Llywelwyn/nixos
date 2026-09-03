@@ -26,13 +26,7 @@ in
       telegram-alerts.units = [ "forgejo" ];
       uptime-page.probes.git = { url = "https://git.ily.rs"; order = 40; };
 
-      caddy.virtualHosts."git.ily.rs" = {
-        extraConfig = ''
-          import favicons
-          reverse_proxy localhost:${toString srv.HTTP_PORT}
-          encode zstd gzip
-        '';
-      };
+      caddy.virtualHosts."git.ily.rs".extraConfig = "import proxy ${toString srv.HTTP_PORT}";
 
       forgejo = {
         enable = true;

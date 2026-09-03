@@ -2,13 +2,7 @@
   flake.modules.nixos.server = {
     services.uptime-page.probes.foundry = { url = "https://foundry.ily.rs"; order = 80; };
 
-    services.caddy.virtualHosts."foundry.ily.rs" = {
-      extraConfig = ''
-        import favicons
-        reverse_proxy localhost:30000
-        encode zstd gzip
-      '';
-    };
+    services.caddy.virtualHosts."foundry.ily.rs".extraConfig = "import proxy 30000";
 
     virtualisation.oci-containers.containers.foundry = {
       image = "node:22.22.2-slim";

@@ -13,6 +13,11 @@
           file_server
         }
       }
+      (proxy) {
+        import favicons
+        encode zstd gzip
+        reverse_proxy localhost:{args[0]}
+      }
     '';
   };
 }

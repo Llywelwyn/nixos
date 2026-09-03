@@ -67,13 +67,7 @@
       telegram-alerts.units = [ "goatcounter" ] ++ lib.attrNames imports';
       uptime-page.probes.stats = { url = "https://stats.ily.rs"; order = 110; };
 
-      caddy.virtualHosts."stats.ily.rs" = {
-        extraConfig = ''
-          import favicons
-          reverse_proxy localhost:8081
-          encode zstd gzip
-        '';
-      };
+      caddy.virtualHosts."stats.ily.rs".extraConfig = "import proxy 8081";
     };
 
     systemd.services = imports';

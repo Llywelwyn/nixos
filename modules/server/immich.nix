@@ -10,13 +10,7 @@
       telegram-alerts.units = [ "immich-server" ];
       uptime-page.probes.photos = { url = "https://photos.ily.rs"; order = 35; };
 
-      caddy.virtualHosts."photos.ily.rs" = {
-        extraConfig = ''
-          import favicons
-          reverse_proxy localhost:2283
-          encode zstd gzip
-        '';
-      };
+      caddy.virtualHosts."photos.ily.rs".extraConfig = "import proxy 2283";
     };
 
     systemd.tmpfiles.rules = [
