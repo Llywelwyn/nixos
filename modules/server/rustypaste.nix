@@ -57,6 +57,17 @@
 
     configFile = (pkgs.formats.toml { }).generate "rustypaste-config.toml" settings;
 
+    hardening = {
+      User = "rustypaste";
+      Group = "rustypaste";
+      Restart = "on-failure";
+      RestartSec = 5;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+    };
+
     notifyScript = pkgs.writeShellScript "rustypaste-notify" ''
       set -u
       token=$(tr -d '\n' < ${config.sops.secrets.rustypaste-telegram-token.path})
@@ -301,22 +312,14 @@
         description = "rustypaste file/paste server";
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
-        serviceConfig = {
-          User = "rustypaste";
-          Group = "rustypaste";
+        serviceConfig = hardening // {
           WorkingDirectory = "/srv/rustypaste";
           ExecStart = "${pkgs.rustypaste}/bin/rustypaste";
           Environment = [
             "CONFIG=${configFile}"
             "DELETE_TOKENS_FILE=${config.sops.secrets.rustypaste-delete-token.path}"
           ];
-          Restart = "on-failure";
-          RestartSec = 5;
           ReadWritePaths = [ "/srv/rustypaste" ];
-          ProtectSystem = "strict";
-          ProtectHome = true;
-          PrivateTmp = true;
-          NoNewPrivileges = true;
         };
       };
 
@@ -325,17 +328,9 @@
         wantedBy = [ "multi-user.target" ];
         requires = [ "rustypaste.service" ];
         after = [ "rustypaste.service" ];
-        serviceConfig = {
+        serviceConfig = hardening // {
           Type = "simple";
-          User = "rustypaste";
-          Group = "rustypaste";
           ExecStart = notifyScript;
-          Restart = "on-failure";
-          RestartSec = 5;
-          ProtectSystem = "strict";
-          ProtectHome = true;
-          PrivateTmp = true;
-          NoNewPrivileges = true;
         };
       };
 
@@ -345,18 +340,10 @@
         requires = [ "rustypaste.service" ];
         wants = [ "network-online.target" ];
         after = [ "rustypaste.service" "network-online.target" ];
-        serviceConfig = {
+        serviceConfig = hardening // {
           Type = "simple";
-          User = "rustypaste";
-          Group = "rustypaste";
           ExecStart = botScript;
-          Restart = "on-failure";
-          RestartSec = 5;
           ReadWritePaths = [ "/srv/rustypaste" ];
-          ProtectSystem = "strict";
-          ProtectHome = true;
-          PrivateTmp = true;
-          NoNewPrivileges = true;
         };
       };
     };
