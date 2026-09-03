@@ -1,11 +1,9 @@
-{ inputs, ... }:
 {
   flake.modules.nixos.desktop = { pkgs, ... }:
     let
-      me3-unwrapped = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.me3;
       me3 = pkgs.symlinkJoin {
         name = "me3";
-        paths = [ me3-unwrapped ];
+        paths = [ pkgs.me3 ];
         nativeBuildInputs = [ pkgs.makeWrapper ];
         postBuild = ''
           wrapProgram $out/bin/me3 \
