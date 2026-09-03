@@ -5,13 +5,6 @@ SELF="$(realpath "$0")"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/tmux-sessionizer"
 CONFIG_FILE="$CONFIG_DIR/sources.conf"
 
-DEFAULT_SPECS=(
-  "$HOME/src/github|2|2"
-  "$HOME/src/aur|1|1"
-  "$HOME/.config|0|1"
-  "$HOME/.local/bin|0|0"
-)
-
 # --- Path shortening ---
 # Shorten all but last 2 components: ~/src/github/user/repo → ~/s/g/user/repo
 # Dotfile components keep the dot: .config → .c
@@ -47,13 +40,7 @@ _preview() {
     tmux list-windows -t "$name" \
       -F '  #{window_index}: #{window_name}#{?window_active, (active),} — #{pane_current_command}' 2>/dev/null
   else
-    if command -v eza >/dev/null 2>&1; then
-      eza -la --icons --no-permissions --no-user --no-time "$item" 2>/dev/null
-    elif command -v tree >/dev/null 2>&1; then
-      tree -L 1 -a --noreport "$item" 2>/dev/null
-    else
-      ls -la "$item" 2>/dev/null
-    fi
+    eza -la --icons --no-permissions --no-user --no-time "$item" 2>/dev/null
   fi
 }
 
@@ -80,23 +67,17 @@ _rename_session() {
 }
 
 _load_specs() {
-  if [[ -f "$CONFIG_FILE" ]]; then
-    local found=false
-    while IFS= read -r line; do
-      line="${line%%#*}"
-      [[ -z "${line// /}" ]] && continue
-      line="${line//\~/$HOME}"
-      local path min max
-      IFS='|' read -r path min max <<< "$line"
-      path="${path#"${path%%[![:space:]]*}"}"; path="${path%"${path##*[![:space:]]}"}"
-      min="${min#"${min%%[![:space:]]*}"}"; min="${min%"${min##*[![:space:]]}"}"
-      max="${max#"${max%%[![:space:]]*}"}"; max="${max%"${max##*[![:space:]]}"}"
-      printf '%s|%s|%s\n' "$path" "$min" "$max"
-      found=true
-    done < "$CONFIG_FILE"
-    $found && return
-  fi
-  printf '%s\n' "${DEFAULT_SPECS[@]}"
+  while IFS= read -r line; do
+    line="${line%%#*}"
+    [[ -z "${line// /}" ]] && continue
+    line="${line//\~/$HOME}"
+    local path min max
+    IFS='|' read -r path min max <<< "$line"
+    path="${path#"${path%%[![:space:]]*}"}"; path="${path%"${path##*[![:space:]]}"}"
+    min="${min#"${min%%[![:space:]]*}"}"; min="${min%"${min##*[![:space:]]}"}"
+    max="${max#"${max%%[![:space:]]*}"}"; max="${max%"${max##*[![:space:]]}"}"
+    printf '%s|%s|%s\n' "$path" "$min" "$max"
+  done < "$CONFIG_FILE"
 }
 
 _list() {
@@ -109,17 +90,12 @@ _list() {
   done < <(tmux list-sessions -F '#{session_name}|#{session_windows}|#{session_path}' 2>/dev/null || true)
 
   # Directories from config
-  local use_fd=false
-  command -v fd >/dev/null 2>&1 && use_fd=true
-
   while IFS='|' read -r path min max; do
     [[ -d "$path" ]] || continue
     if [[ "$min" -eq 0 && "$max" -eq 0 ]]; then
       printf '%s\n' "$path"
-    elif $use_fd; then
-      fd --type d --min-depth "$min" --max-depth "$max" . "$path" 2>/dev/null
     else
-      find "$path" -mindepth "$min" -maxdepth "$max" -type d 2>/dev/null
+      fd --type d --min-depth "$min" --max-depth "$max" . "$path" 2>/dev/null
     fi
   done < <(_load_specs) | sed 's:/$::' | sort -u | _shorten_paths
 }
