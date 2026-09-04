@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+photos=/data/photos
+
+mnt=$(mktemp -d)
+stamp=$(mktemp)
+trap 'fusermount -u "$mnt" 2>/dev/null || true; rmdir "$mnt" 2>/dev/null || true; rm -f "$stamp"' EXIT
+
+pkill -f 'kf6/kiod[6]' 2>/dev/null || true
+if ! aft-mtp-mount "$mnt" || ! mountpoint -q "$mnt"; then
+  echo "photo-import: no camera found" >&2
+  exit 1
+fi
+
+exiftool -q -q -r -o . \
+  '-FileName<FileModifyDate' '-FileName<CreateDate' '-FileName<DateTimeOriginal' \
+  -d "$photos/%Y/%m/%Y%m%d-%H%M%S_%%f.%%e" "$mnt"/*/DCIM 2>/dev/null || true
+
+echo "photo-import: $(find "$photos" -type f -newer "$stamp" | wc -l) new photo(s)"

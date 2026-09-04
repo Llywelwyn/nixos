@@ -187,6 +187,7 @@
             environment = site.buildEnvironment;
             wants = [ "network-online.target" ];
             wantedBy = [ "multi-user.target" ];
+            restartIfChanged = false;
             serviceConfig = {
               Type = "oneshot";
               RemainAfterExit = false;

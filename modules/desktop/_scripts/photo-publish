@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+server=https://photos.ily.rs
+key_file=/run/secrets/immich-api-key
+key=$(tr -d '\n' < "$key_file")
+
+api() { curl -sf -H "x-api-key: $key" "$@"; }
+
+immich-go upload from-folder --server "$server" --api-key "$key" \
+  --exclude-extensions .xmp --folder-as-album PATH --album-path-joiner "/" /data/photos/*/
+
+me=$(api "$server/api/users/me" | jq -r .id)
+others=$(api "$server/api/users" | jq -r --arg me "$me" '.[] | select(.id != $me) | .id' || true)
+
+if [ -z "$others" ]; then
+  echo "photo-publish: no other users found, skipping album sharing" >&2
+  exit 0
+fi
+
+albums=$(api "$server/api/albums")
+
+for uid in $others; do
+  while IFS=$'\t' read -r aid name; do
+    [ -n "$aid" ] || continue
+    api -X PUT -H 'Content-Type: application/json' \
+      -d "{\"albumUsers\":[{\"userId\":\"$uid\",\"role\":\"editor\"}]}" \
+      "$server/api/albums/$aid/users" > /dev/null
+    echo "photo-publish: shared \"$name\""
+  done < <(jq -r --arg me "$me" --arg uid "$uid" \
+    '.[] | select(.ownerId == $me) | select([(.albumUsers // [])[].user.id] | index($uid) | not) | [.id, .albumName] | @tsv' <<< "$albums")
+done
